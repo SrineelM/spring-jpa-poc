@@ -1,0 +1,77 @@
+###############################################################################
+# Base (profile-agnostic) configuration                                       #
+# Only put settings here that are identical across dev & prod.               #
+# Environment-specific overrides live in:                                    #
+#   - application-dev.yml (local laptop / developer experience)              #
+#   - application-prod.yml (enterprise hardened)                             #
+###############################################################################
+
+spring:
+  application:
+    name: spring-jpa-poc
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=500,expireAfterAccess=10m
+
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      # Default conservative sampling; dev & prod override as needed
+      probability: 0.1
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Common Resilience4j defaults (overridable per profile)
+resilience4j:
+  circuitbreaker:
+    instances:
+      myCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: ${CB_WINDOW_SIZE:10}
+        minimumNumberOfCalls: ${CB_MIN_CALLS:5}
+        permittedNumberOfCallsInHalfOpenState: ${CB_HALF_OPEN_CALLS:3}
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: ${CB_OPEN_WAIT:5s}
+        failureRateThreshold: ${CB_FAILURE_THRESHOLD:50}
+        eventConsumerBufferSize: 10
+        recordExceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - java.util.concurrent.TimeoutException
+          - java.io.IOException
+  retry:
+    instances:
+      myRetry:
+        maxAttempts: ${RETRY_MAX_ATTEMPTS:3}
+        waitDuration: ${RETRY_WAIT:100ms}
+        retryExceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - java.util.concurrent.TimeoutException
+          - java.io.IOException
+  timelimiter:
+    instances:
+      myTimeLimiter:
+        timeoutDuration: ${TIME_LIMITER_TIMEOUT:2s}
+        cancelRunningFuture: true
+  bulkhead:
+    instances:
+      myBulkhead:
+        maxConcurrentCalls: ${BULKHEAD_MAX_CALLS:10}
+        maxWaitDuration: ${BULKHEAD_WAIT:0}
+  ratelimiter:
+    instances:
+      myRateLimiter:
+        limitForPeriod: ${RL_LIMIT:5}
+        limitRefreshPeriod: ${RL_REFRESH:1s}
+        timeoutDuration: ${RL_TIMEOUT:0}
+
+app:
+  jwt-expiration-milliseconds: ${JWT_EXPIRY_MS:86400000}
+  # jwt-secret defined in environment-specific profile (dev uses inline, prod uses env var)
+
+# NOTE: Activate a profile via -Dspring.profiles.active=dev (default for local) or prod.

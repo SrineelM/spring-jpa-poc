@@ -1,0 +1,15 @@
+package com.example.demo.repository;
+
+import org.springframework.data.jpa.repository.*;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface UserWindowRepository extends JpaRepository<com.example.demo.domain.User, Long> {
+
+    @Query(value = "SELECT u.id, u.name, u.role, u.created_date, " +
+            "RANK() OVER (PARTITION BY u.role ORDER BY u.created_date DESC) AS role_rank, " +
+            "COUNT(*) OVER (PARTITION BY u.role) AS total_in_role " +
+            "FROM users u", nativeQuery = true)
+    List<Object[]> getUserRankingRaw();
+}

@@ -1,0 +1,57 @@
+###############################################################################
+# Development profile - local laptop                                          #
+# Purpose: fast iteration, rich diagnostics, in-memory DB, full sampling.     #
+###############################################################################
+
+spring:
+  profiles: dev
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,circuitbreakers,ratelimiters,bulkheads,timelimiters
+  endpoint:
+    health:
+      show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+
+app:
+  jwt-secret: local-dev-insecure-secret-change-me
+
+# Developer convenience actuator groups (optional)
+# management:
+#   endpoint:
+#     health:
+#       group:
+#         liveness:
+#           include: ping
+#         readiness:
+#           include: db,circuitBreakers

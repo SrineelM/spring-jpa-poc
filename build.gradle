@@ -1,0 +1,88 @@
+// This section defines the Gradle plugins used in the project.
+plugins {
+    // The Java plugin adds support for compiling and building Java projects.
+    id 'java'
+    // The Spring Boot plugin provides tasks for building and running Spring Boot applications.
+    id 'org.springframework.boot' version '3.5.0'
+    // The Spring Dependency Management plugin provides dependency management capabilities, allowing us to manage dependency versions in a centralized way.
+    id 'io.spring.dependency-management' version '1.1.5'
+}
+
+// Project metadata
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '17' // Set the Java version to 17
+
+// This section defines the repositories where Gradle will look for dependencies.
+repositories {
+    // Maven Central is the default repository for most Java libraries.
+    mavenCentral()
+}
+
+// This block defines extra properties that can be used throughout the build script.
+ext {
+    // We define the Spring Cloud version as a property to ensure all Spring Cloud dependencies use the same version.
+    set('springCloudVersion', "2023.0.0")
+}
+
+// This block is used to manage the versions of the project's dependencies.
+// It allows us to import a Bill of Materials (BOM) to control the versions of a set of dependencies.
+dependencyManagement {
+    imports {
+        // The Spring Cloud BOM provides managed versions for all Spring Cloud dependencies.
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
+// This section defines the project's dependencies.
+dependencies {
+    // --- Spring Boot Starters ---
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa' // For data persistence with JPA and Hibernate
+    implementation 'org.springframework.boot:spring-boot-starter-web' // For building web applications, including RESTful APIs
+    implementation 'org.springframework.boot:spring-boot-starter-cache' // For caching support
+    implementation 'org.springframework.boot:spring-boot-starter-aop' // For aspect-oriented programming, required by Resilience4j
+    implementation 'org.springframework.boot:spring-boot-starter-actuator' // For monitoring and managing the application
+    implementation 'org.springframework.boot:spring-boot-starter-security' // For authentication and authorization
+
+    // --- Resilience4j (Fault Tolerance) ---
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j' // For the Circuit Breaker pattern
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3' // Core Resilience4j library for Spring Boot 3
+
+    // --- Observability (Logging & Tracing) ---
+    implementation 'net.logstash.logback:logstash-logback-encoder:7.4' // For structured (JSON) logging
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave' // Micrometer Tracing integration with Brave
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave' // For sending traces to Zipkin
+
+    // --- Security (JWT) ---
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5' // API for creating and parsing JWTs
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5' // Implementation of the JWT API
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // For JSON processing with Jackson
+
+    // --- Database & Caching ---
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.6' // High-performance caching library
+    runtimeOnly 'com.h2database:h2' // In-memory database for development and testing
+
+    // --- Developer Tools ---
+    compileOnly 'org.projectlombok:lombok' // Reduces boilerplate code (e.g., getters, setters)
+    annotationProcessor 'org.projectlombok:lombok' // Required for Lombok's annotation processing
+
+    // --- Documentation ---
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0' // For API documentation with Swagger UI
+    
+    // --- Validation ---
+    implementation 'org.springframework.boot:spring-boot-starter-validation' // For input validation
+    
+    // --- Rate Limiting ---
+    implementation 'com.github.vladimir-bukhtoyarov:bucket4j-core:7.6.0'
+    implementation 'com.github.vladimir-bukhtoyarov:bucket4j-caffeine:7.6.0'
+    
+    // --- Testing ---
+    testImplementation 'org.springframework.boot:spring-boot-starter-test' // Core testing utilities for Spring Boot
+    testImplementation 'org.springframework.security:spring-security-test' // For testing Spring Security features
+}
+
+// This section configures the testing framework.
+test {
+    // Use the JUnit Platform to run tests.
+    useJUnitPlatform()
+}
