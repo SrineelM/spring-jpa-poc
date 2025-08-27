@@ -39,7 +39,7 @@ public class JwtTokenProvider {
     public String generateToken(Authentication authentication) {
         String username = authentication.getName();
         Date currentDate = new Date();
-        Date expireDate = new Date(currentDate.getTime() + jwtExpirationDate);
+    Date expireDate = new Date(currentDate.getTime() + jwtExpirationDate); // compute absolute expiration timestamp
 
         logger.debug("Generating JWT token for user: {}", username);
 
@@ -67,7 +67,7 @@ public class JwtTokenProvider {
                     .parseClaimsJws(token)
                     .getBody();
             
-            String username = claims.getSubject();
+            String username = claims.getSubject(); // subject claim typically stores principal identifier
             logger.debug("Extracted username from token: {}", username);
             return username;
             
@@ -94,7 +94,7 @@ public class JwtTokenProvider {
                 return false;
             }
             
-            if (claims.getExpiration().before(new Date())) {
+            if (claims.getExpiration().before(new Date())) { // explicit expiration check (library also throws ExpiredJwtException)
                 logger.warn("Token validation failed: Token is expired");
                 return false;
             }

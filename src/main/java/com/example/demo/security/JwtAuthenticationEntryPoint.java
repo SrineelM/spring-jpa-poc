@@ -18,7 +18,7 @@ import java.io.IOException;
  * authentication, the {@link #commence} method is triggered, and it sends an
  * HTTP 401 Unauthorized response.
  */
-@Component
+@Component // plugged into HttpSecurity.exceptionHandling().authenticationEntryPoint(...)
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     /**
@@ -35,6 +35,6 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
                          AuthenticationException authException) throws IOException, ServletException {
         // Send an HTTP 401 Unauthorized error with the exception message.
         // This informs the client that authentication is required to access the resource.
-        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage());
+    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage()); // terminates filter chain with 401
     }
 }

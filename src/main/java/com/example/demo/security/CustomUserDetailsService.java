@@ -17,7 +17,7 @@ import java.util.Set;
  * It is responsible for loading user-specific data from the database during the
  * authentication process.
  */
-@Service
+@Service // registered as a Spring bean to integrate with authentication manager
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
@@ -37,18 +37,20 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         // 1. Find the user in the database by their email address.
-        User user = userRepository.findByEmailWithProfile(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+    User user = userRepository.findByEmailWithProfile(email)
+        .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email)); // eager fetch profile to avoid lazy issues later
 
         // 2. Create a set of authorities (roles) for the user.
         // Spring Security requires roles to be prefixed with "ROLE_".
-        Set<GrantedAuthority> authorities = Set.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+    Set<GrantedAuthority> authorities = Set.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())); // single role model (extend to list if multi-role)
 
         // 3. Return a Spring Security User object.
         // This object contains the user's email (as the username), password, and authorities.
         // Spring Security will use this object to verify the user's credentials.
-        return new org.springframework.security.core.userdetails.User(user.getEmail(),
-                user.getPassword(),
-                authorities);
+    return new org.springframework.security.core.userdetails.User(
+        user.getEmail(),                 // username (principal)
+        user.getPassword(),              // hashed password
+        authorities                      // granted authorities used in access decisions
+    );
     }
 }

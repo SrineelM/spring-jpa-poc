@@ -46,9 +46,10 @@ public class UserService {
                 name, email, role, pageable.getPageNumber(), pageable.getPageSize());
         
         try {
-            Specification<User> spec = Specification.where(null);
+            // Start with a neutral Specification (always true) instead of deprecated where(null)
+            Specification<User> spec = (root, query, cb) -> cb.conjunction();
 
-            if (name != null && !name.trim().isEmpty()) {
+            if (name != null && !name.trim().isEmpty()) { // dynamic spec building (null-safe)
                 spec = spec.and(UserSpecifications.nameContains(name));
                 logger.debug("Applied name filter: {}", name);
             }
@@ -56,7 +57,7 @@ public class UserService {
                 spec = spec.and(UserSpecifications.hasEmail(email));
                 logger.debug("Applied email filter: {}", email);
             }
-            if (role != null && !role.trim().isEmpty()) {
+            if (role != null && !role.trim().isEmpty()) { // role passed as string; spec converts to enum internally
                 spec = spec.and(UserSpecifications.roleIs(role));
                 logger.debug("Applied role filter: {}", role);
             }
@@ -135,7 +136,7 @@ public class UserService {
             
         } catch (Exception e) {
             logger.error("Error getting user count", e);
-            throw e;
+            throw e; // propagate to allow upstream handling / metrics tagging
         }
     }
 }

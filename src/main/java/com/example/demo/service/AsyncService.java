@@ -43,6 +43,6 @@ public class AsyncService {
         logger.info("Long-running task has finished.");
 
         // Once the task is complete, the CompletableFuture is completed with the result.
-        return CompletableFuture.completedFuture("Task completed successfully!");
+    return CompletableFuture.completedFuture("Task completed successfully!"); // immediately resolved future
     }
 }

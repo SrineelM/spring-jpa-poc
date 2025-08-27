@@ -47,17 +47,17 @@ public class ExternalApiService {
                 logger.info("Starting external API call #{} with correlation ID: {}", requestId, correlationId);
                 
                 // Simulate network latency
-                Thread.sleep(ThreadLocalRandom.current().nextInt(100, 500));
+                Thread.sleep(ThreadLocalRandom.current().nextInt(100, 500)); // variable simulated latency
                 
                 // Simulate random failures (30% failure rate for demonstration)
-                if (ThreadLocalRandom.current().nextDouble() < 0.3) {
+                if (ThreadLocalRandom.current().nextDouble() < 0.3) { // inject failure for resilience demonstration
                     failureCounter.incrementAndGet();
                     logger.warn("External API call #{} failed - simulated failure", requestId);
                     throw new RuntimeException("Simulated external service failure");
                 }
                 
                 successCounter.incrementAndGet();
-                String response = "External API Response #" + requestId + " at " + System.currentTimeMillis();
+                String response = "External API Response #" + requestId + " at " + System.currentTimeMillis(); // synthetic payload
                 
                 logger.info("External API call #{} completed successfully. Response: {}", requestId, response);
                 // (Metrics) Tag outcome=success manually via custom Counter/Timer if finer-grained labels needed.
