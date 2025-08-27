@@ -1,6 +1,5 @@
 
-docker build -t spring-jpa-poc .
-docker run -p 8080:8080 spring-jpa-poc
+
 <div align="center">
 
 # Production-Ready Spring Boot 3 Showcase
