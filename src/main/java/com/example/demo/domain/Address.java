@@ -10,34 +10,34 @@ import jakarta.persistence.Embeddable;
  */
 @Embeddable
 public class Address {
-  private String street;
-  private String city;
+    private String street;
+    private String city;
 
-  @Column(name = "postal_code")
-  private String postalCode;
+    @Column(name = "postal_code")
+    private String postalCode;
 
-  // Getters and Setters
-  public String getStreet() {
-    return street;
-  }
+    // Getters and Setters
+    public String getStreet() {
+        return street;
+    }
 
-  public void setStreet(String street) {
-    this.street = street;
-  }
+    public void setStreet(String street) {
+        this.street = street;
+    }
 
-  public String getCity() {
-    return city;
-  }
+    public String getCity() {
+        return city;
+    }
 
-  public void setCity(String city) {
-    this.city = city;
-  }
+    public void setCity(String city) {
+        this.city = city;
+    }
 
-  public String getPostalCode() {
-    return postalCode;
-  }
+    public String getPostalCode() {
+        return postalCode;
+    }
 
-  public void setPostalCode(String postalCode) {
-    this.postalCode = postalCode;
-  }
+    public void setPostalCode(String postalCode) {
+        this.postalCode = postalCode;
+    }
 }

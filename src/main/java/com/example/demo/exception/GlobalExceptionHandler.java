@@ -27,155 +27,120 @@ import org.springframework.web.context.request.WebRequest;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-  private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-  @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<ErrorDetails> handleValidationExceptions(
-      MethodArgumentNotValidException ex, WebRequest request) {
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorDetails> handleValidationExceptions(
+            MethodArgumentNotValidException ex, WebRequest request) {
 
-    Map<String, String> errors = new HashMap<>();
-    ex.getBindingResult()
-        .getAllErrors()
-        .forEach(
-            (error) -> { // aggregate field errors into map
-              String fieldName = ((FieldError) error).getField();
-              String errorMessage = error.getDefaultMessage();
-              errors.put(fieldName, errorMessage);
-            });
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult()
+                .getAllErrors()
+                .forEach(
+                        (error) -> { // aggregate field errors into map
+                            String fieldName = ((FieldError) error).getField();
+                            String errorMessage = error.getDefaultMessage();
+                            errors.put(fieldName, errorMessage);
+                        });
 
-    logger.warn(
-        "Validation failed for request: {}, errors: {}", request.getDescription(false), errors);
+        logger.warn("Validation failed for request: {}, errors: {}", request.getDescription(false), errors);
 
-    ErrorDetails errorDetails =
-        new ErrorDetails(
-            LocalDateTime.now(),
-            "Validation failed",
-            request.getDescription(false),
-            "VALIDATION_ERROR",
-            errors);
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(), "Validation failed", request.getDescription(false), "VALIDATION_ERROR", errors);
 
-    return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
-  }
+        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+    }
 
-  @ExceptionHandler(BadCredentialsException.class)
-  public ResponseEntity<ErrorDetails> handleBadCredentialsException(
-      BadCredentialsException ex, WebRequest request) {
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorDetails> handleBadCredentialsException(BadCredentialsException ex, WebRequest request) {
 
-    logger.warn("Authentication failed for request: {}", request.getDescription(false));
+        logger.warn("Authentication failed for request: {}", request.getDescription(false));
 
-    ErrorDetails errorDetails =
-        new ErrorDetails(
-            LocalDateTime.now(),
-            "Invalid credentials",
-            request.getDescription(false),
-            "AUTHENTICATION_FAILED");
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(), "Invalid credentials", request.getDescription(false), "AUTHENTICATION_FAILED");
 
-    return new ResponseEntity<>(errorDetails, HttpStatus.UNAUTHORIZED);
-  }
+        return new ResponseEntity<>(errorDetails, HttpStatus.UNAUTHORIZED);
+    }
 
-  @ExceptionHandler(AccessDeniedException.class)
-  public ResponseEntity<ErrorDetails> handleAccessDeniedException(
-      AccessDeniedException ex, WebRequest request) {
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorDetails> handleAccessDeniedException(AccessDeniedException ex, WebRequest request) {
 
-    logger.warn("Access denied for request: {}", request.getDescription(false));
+        logger.warn("Access denied for request: {}", request.getDescription(false));
 
-    ErrorDetails errorDetails =
-        new ErrorDetails(
-            LocalDateTime.now(), "Access denied", request.getDescription(false), "ACCESS_DENIED");
+        ErrorDetails errorDetails =
+                new ErrorDetails(LocalDateTime.now(), "Access denied", request.getDescription(false), "ACCESS_DENIED");
 
-    return new ResponseEntity<>(errorDetails, HttpStatus.FORBIDDEN);
-  }
+        return new ResponseEntity<>(errorDetails, HttpStatus.FORBIDDEN);
+    }
 
-  @ExceptionHandler(CallNotPermittedException.class)
-  public ResponseEntity<ErrorDetails> handleCircuitBreakerException(
-      CallNotPermittedException ex, WebRequest request) {
+    @ExceptionHandler(CallNotPermittedException.class)
+    public ResponseEntity<ErrorDetails> handleCircuitBreakerException(
+            CallNotPermittedException ex, WebRequest request) {
 
-    logger.warn("Circuit breaker is open for request: {}", request.getDescription(false));
+        logger.warn("Circuit breaker is open for request: {}", request.getDescription(false));
 
-    ErrorDetails errorDetails =
-        new ErrorDetails(
-            LocalDateTime.now(),
-            "Service temporarily unavailable - circuit breaker is open",
-            request.getDescription(false),
-            "CIRCUIT_BREAKER_OPEN");
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(),
+                "Service temporarily unavailable - circuit breaker is open",
+                request.getDescription(false),
+                "CIRCUIT_BREAKER_OPEN");
 
-    return new ResponseEntity<>(errorDetails, HttpStatus.SERVICE_UNAVAILABLE);
-  }
+        return new ResponseEntity<>(errorDetails, HttpStatus.SERVICE_UNAVAILABLE);
+    }
 
-  @ExceptionHandler(RequestNotPermitted.class)
-  public ResponseEntity<ErrorDetails> handleRateLimitException(
-      RequestNotPermitted ex, WebRequest request) {
+    @ExceptionHandler(RequestNotPermitted.class)
+    public ResponseEntity<ErrorDetails> handleRateLimitException(RequestNotPermitted ex, WebRequest request) {
 
-    logger.warn("Rate limit exceeded for request: {}", request.getDescription(false));
+        logger.warn("Rate limit exceeded for request: {}", request.getDescription(false));
 
-    ErrorDetails errorDetails =
-        new ErrorDetails(
-            LocalDateTime.now(),
-            "Rate limit exceeded",
-            request.getDescription(false),
-            "RATE_LIMIT_EXCEEDED");
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(), "Rate limit exceeded", request.getDescription(false), "RATE_LIMIT_EXCEEDED");
 
-    return new ResponseEntity<>(errorDetails, HttpStatus.TOO_MANY_REQUESTS);
-  }
+        return new ResponseEntity<>(errorDetails, HttpStatus.TOO_MANY_REQUESTS);
+    }
 
-  @ExceptionHandler(TimeoutException.class)
-  public ResponseEntity<ErrorDetails> handleTimeoutException(
-      TimeoutException ex, WebRequest request) {
+    @ExceptionHandler(TimeoutException.class)
+    public ResponseEntity<ErrorDetails> handleTimeoutException(TimeoutException ex, WebRequest request) {
 
-    logger.warn("Request timeout for: {}", request.getDescription(false));
+        logger.warn("Request timeout for: {}", request.getDescription(false));
 
-    ErrorDetails errorDetails =
-        new ErrorDetails(
-            LocalDateTime.now(),
-            "Request timeout",
-            request.getDescription(false),
-            "REQUEST_TIMEOUT");
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(), "Request timeout", request.getDescription(false), "REQUEST_TIMEOUT");
 
-    return new ResponseEntity<>(errorDetails, HttpStatus.REQUEST_TIMEOUT);
-  }
+        return new ResponseEntity<>(errorDetails, HttpStatus.REQUEST_TIMEOUT);
+    }
 
-  @ExceptionHandler(DataAccessException.class)
-  public ResponseEntity<ErrorDetails> handleDataAccessException(
-      DataAccessException ex, WebRequest request) {
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ErrorDetails> handleDataAccessException(DataAccessException ex, WebRequest request) {
 
-    logger.error("Database error for request: {}", request.getDescription(false), ex);
+        logger.error("Database error for request: {}", request.getDescription(false), ex);
 
-    ErrorDetails errorDetails =
-        new ErrorDetails(
-            LocalDateTime.now(),
-            "Database operation failed",
-            request.getDescription(false),
-            "DATABASE_ERROR");
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(), "Database operation failed", request.getDescription(false), "DATABASE_ERROR");
 
-    return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
-  }
+        return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
-  @ExceptionHandler(CustomCheckedException.class)
-  public ResponseEntity<ErrorDetails> handleCustomCheckedException(
-      CustomCheckedException ex, WebRequest request) {
+    @ExceptionHandler(CustomCheckedException.class)
+    public ResponseEntity<ErrorDetails> handleCustomCheckedException(CustomCheckedException ex, WebRequest request) {
 
-    logger.warn("Business logic error: {}", ex.getMessage());
+        logger.warn("Business logic error: {}", ex.getMessage());
 
-    ErrorDetails errorDetails =
-        new ErrorDetails(
-            LocalDateTime.now(), ex.getMessage(), request.getDescription(false), "BUSINESS_ERROR");
+        ErrorDetails errorDetails =
+                new ErrorDetails(LocalDateTime.now(), ex.getMessage(), request.getDescription(false), "BUSINESS_ERROR");
 
-    return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
-  }
+        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+    }
 
-  @ExceptionHandler(Exception.class) // fallback catch-all – always keep last to avoid pre-emption
-  public ResponseEntity<ErrorDetails> handleGlobalException(Exception ex, WebRequest request) {
-    logger.error("Unexpected error for request: {}", request.getDescription(false), ex);
+    @ExceptionHandler(Exception.class) // fallback catch-all – always keep last to avoid pre-emption
+    public ResponseEntity<ErrorDetails> handleGlobalException(Exception ex, WebRequest request) {
+        logger.error("Unexpected error for request: {}", request.getDescription(false), ex);
 
-    ErrorDetails errorDetails =
-        new ErrorDetails(
-            LocalDateTime.now(),
-            "An unexpected error occurred",
-            request.getDescription(false),
-            "INTERNAL_ERROR");
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(), "An unexpected error occurred", request.getDescription(false), "INTERNAL_ERROR");
 
-    return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
-  }
+        return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }
 
 /**
@@ -183,47 +148,46 @@ public class GlobalExceptionHandler {
  * handler (could also live in a shared error package if reused).
  */
 class ErrorDetails {
-  private LocalDateTime timestamp; // when the error response was generated
-  private String message; // human-readable summary
-  private String details; // request description (URI context)
-  private String errorCode; // machine-readable code
-  private Map<String, String>
-      validationErrors; // optional map of field -> message for validation failures
+    private LocalDateTime timestamp; // when the error response was generated
+    private String message; // human-readable summary
+    private String details; // request description (URI context)
+    private String errorCode; // machine-readable code
+    private Map<String, String> validationErrors; // optional map of field -> message for validation failures
 
-  public ErrorDetails(LocalDateTime timestamp, String message, String details, String errorCode) {
-    this.timestamp = timestamp;
-    this.message = message;
-    this.details = details;
-    this.errorCode = errorCode;
-  }
+    public ErrorDetails(LocalDateTime timestamp, String message, String details, String errorCode) {
+        this.timestamp = timestamp;
+        this.message = message;
+        this.details = details;
+        this.errorCode = errorCode;
+    }
 
-  public ErrorDetails(
-      LocalDateTime timestamp,
-      String message,
-      String details,
-      String errorCode,
-      Map<String, String> validationErrors) {
-    this(timestamp, message, details, errorCode); // delegate to main constructor
-    this.validationErrors = validationErrors;
-  }
+    public ErrorDetails(
+            LocalDateTime timestamp,
+            String message,
+            String details,
+            String errorCode,
+            Map<String, String> validationErrors) {
+        this(timestamp, message, details, errorCode); // delegate to main constructor
+        this.validationErrors = validationErrors;
+    }
 
-  public LocalDateTime getTimestamp() {
-    return timestamp;
-  }
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
 
-  public String getMessage() {
-    return message;
-  }
+    public String getMessage() {
+        return message;
+    }
 
-  public String getDetails() {
-    return details;
-  }
+    public String getDetails() {
+        return details;
+    }
 
-  public String getErrorCode() {
-    return errorCode;
-  }
+    public String getErrorCode() {
+        return errorCode;
+    }
 
-  public Map<String, String> getValidationErrors() {
-    return validationErrors;
-  }
+    public Map<String, String> getValidationErrors() {
+        return validationErrors;
+    }
 }

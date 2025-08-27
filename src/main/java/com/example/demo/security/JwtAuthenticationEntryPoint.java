@@ -19,24 +19,21 @@ import org.springframework.stereotype.Component;
 @Component // plugged into HttpSecurity.exceptionHandling().authenticationEntryPoint(...)
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-  /**
-   * This method is invoked when an unauthenticated user tries to access a protected resource. It
-   * sends an HTTP 401 Unauthorized error response to the client.
-   *
-   * @param request The request that resulted in an AuthenticationException.
-   * @param response The response, so that the user agent can begin authentication.
-   * @param authException The exception that triggered the commencement.
-   */
-  @Override
-  public void commence(
-      HttpServletRequest request,
-      HttpServletResponse response,
-      AuthenticationException authException)
-      throws IOException, ServletException {
-    // Send an HTTP 401 Unauthorized error with the exception message.
-    // This informs the client that authentication is required to access the resource.
-    response.sendError(
-        HttpServletResponse.SC_UNAUTHORIZED,
-        authException.getMessage()); // terminates filter chain with 401
-  }
+    /**
+     * This method is invoked when an unauthenticated user tries to access a protected resource. It
+     * sends an HTTP 401 Unauthorized error response to the client.
+     *
+     * @param request The request that resulted in an AuthenticationException.
+     * @param response The response, so that the user agent can begin authentication.
+     * @param authException The exception that triggered the commencement.
+     */
+    @Override
+    public void commence(
+            HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
+            throws IOException, ServletException {
+        // Send an HTTP 401 Unauthorized error with the exception message.
+        // This informs the client that authentication is required to access the resource.
+        response.sendError(
+                HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage()); // terminates filter chain with 401
+    }
 }

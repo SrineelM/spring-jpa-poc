@@ -9,20 +9,20 @@ import org.springframework.context.ApplicationEvent;
  * analytics, provisioning, etc.) without tightly coupling them to the creation logic.
  */
 public class UserCreatedEvent extends ApplicationEvent {
-  /** The newly created user aggregate root. */
-  private final User user;
+    /** The newly created user aggregate root. */
+    private final User user;
 
-  /**
-   * @param source publisher (commonly the service issuing the event)
-   * @param user domain object representing the persisted user state
-   */
-  public UserCreatedEvent(Object source, User user) {
-    super(source); // pass publisher to base event (useful for debugging / tracing)
-    this.user = user;
-  }
+    /**
+     * @param source publisher (commonly the service issuing the event)
+     * @param user domain object representing the persisted user state
+     */
+    public UserCreatedEvent(Object source, User user) {
+        super(source); // pass publisher to base event (useful for debugging / tracing)
+        this.user = user;
+    }
 
-  /** Expose immutable user reference to listeners. */
-  public User getUser() {
-    return user;
-  }
+    /** Expose immutable user reference to listeners. */
+    public User getUser() {
+        return user;
+    }
 }

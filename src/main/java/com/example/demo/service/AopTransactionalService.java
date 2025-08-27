@@ -14,40 +14,36 @@ import org.springframework.stereotype.Service;
 @Service
 public class AopTransactionalService {
 
-  private static final Logger logger = LoggerFactory.getLogger(AopTransactionalService.class);
+    private static final Logger logger = LoggerFactory.getLogger(AopTransactionalService.class);
 
-  private final UserRepository userRepository;
+    private final UserRepository userRepository;
 
-  public AopTransactionalService(UserRepository userRepository) {
-    this.userRepository = userRepository;
-  }
+    public AopTransactionalService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
-  /**
-   * Creates a user. This method is expected to be executed within a transaction that will be
-   * successfully committed, thanks to our AOP configuration.
-   *
-   * @param user The user to create.
-   */
-  public void createUserSuccessfully(User user) {
-    logger.info(
-        "Executing createUserSuccessfully in AopTransactionalService for user: {}",
-        user.getEmail());
-    userRepository.save(user);
-    logger.info("User {} saved successfully via AOP-based transaction.", user.getEmail());
-  }
+    /**
+     * Creates a user. This method is expected to be executed within a transaction that will be
+     * successfully committed, thanks to our AOP configuration.
+     *
+     * @param user The user to create.
+     */
+    public void createUserSuccessfully(User user) {
+        logger.info("Executing createUserSuccessfully in AopTransactionalService for user: {}", user.getEmail());
+        userRepository.save(user);
+        logger.info("User {} saved successfully via AOP-based transaction.", user.getEmail());
+    }
 
-  /**
-   * Attempts to create a user but throws an exception to trigger a rollback. The rollback is
-   * handled by the AOP transactional advice.
-   *
-   * @param user The user to create.
-   */
-  public void createUserAndRollback(User user) {
-    logger.info("Attempting to create user {} via AOP, expecting rollback.", user.getEmail());
-    userRepository.save(user);
-    logger.info(
-        "User {} saved, but now throwing exception to trigger AOP-based rollback.",
-        user.getEmail());
-    throw new RuntimeException("Simulating failure to trigger AOP-based rollback.");
-  }
+    /**
+     * Attempts to create a user but throws an exception to trigger a rollback. The rollback is
+     * handled by the AOP transactional advice.
+     *
+     * @param user The user to create.
+     */
+    public void createUserAndRollback(User user) {
+        logger.info("Attempting to create user {} via AOP, expecting rollback.", user.getEmail());
+        userRepository.save(user);
+        logger.info("User {} saved, but now throwing exception to trigger AOP-based rollback.", user.getEmail());
+        throw new RuntimeException("Simulating failure to trigger AOP-based rollback.");
+    }
 }

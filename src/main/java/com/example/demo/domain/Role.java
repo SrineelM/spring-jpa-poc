@@ -5,9 +5,9 @@ package com.example.demo.domain;
  * and code readability compared to using simple strings.
  */
 public enum Role {
-  /** Standard user with basic permissions. */
-  USER,
+    /** Standard user with basic permissions. */
+    USER,
 
-  /** Administrator with elevated permissions. */
-  ADMIN
+    /** Administrator with elevated permissions. */
+    ADMIN
 }

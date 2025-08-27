@@ -7,31 +7,31 @@ package com.example.demo.dto;
  */
 public class LoginDto {
 
-  /**
-   * Email (or username) the user registered with. Acts as principal identifier in authentication.
-   */
-  private String email;
+    /**
+     * Email (or username) the user registered with. Acts as principal identifier in authentication.
+     */
+    private String email;
 
-  /**
-   * Raw password as entered by the user. It is never stored directly; the authentication layer will
-   * encode & compare it with the hashed password.
-   */
-  private String password;
+    /**
+     * Raw password as entered by the user. It is never stored directly; the authentication layer will
+     * encode & compare it with the hashed password.
+     */
+    private String password;
 
-  // --- Accessors ---
-  public String getEmail() {
-    return email;
-  }
+    // --- Accessors ---
+    public String getEmail() {
+        return email;
+    }
 
-  public void setEmail(String email) {
-    this.email = email;
-  }
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-  public String getPassword() {
-    return password;
-  }
+    public String getPassword() {
+        return password;
+    }
 
-  public void setPassword(String password) {
-    this.password = password;
-  }
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }

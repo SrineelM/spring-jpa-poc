@@ -10,14 +10,14 @@ import org.springframework.context.ApplicationEvent;
  */
 public class UserRegisteredEvent extends ApplicationEvent {
 
-  private final User user; // Registered user snapshot
+    private final User user; // Registered user snapshot
 
-  public UserRegisteredEvent(Object source, User user) {
-    super(source); // capture publisher for traceability
-    this.user = user;
-  }
+    public UserRegisteredEvent(Object source, User user) {
+        super(source); // capture publisher for traceability
+        this.user = user;
+    }
 
-  public User getUser() {
-    return user;
-  }
+    public User getUser() {
+        return user;
+    }
 }

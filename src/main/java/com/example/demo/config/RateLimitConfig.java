@@ -14,25 +14,25 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class RateLimitConfig implements WebMvcConfigurer {
 
-  private final RateLimitInterceptor rateLimitInterceptor;
+    private final RateLimitInterceptor rateLimitInterceptor;
 
-  /**
-   * Constructor for dependency injection. Spring will inject the RateLimitInterceptor bean.
-   *
-   * @param rateLimitInterceptor The interceptor to be registered.
-   */
-  public RateLimitConfig(RateLimitInterceptor rateLimitInterceptor) {
-    this.rateLimitInterceptor = rateLimitInterceptor;
-  }
+    /**
+     * Constructor for dependency injection. Spring will inject the RateLimitInterceptor bean.
+     *
+     * @param rateLimitInterceptor The interceptor to be registered.
+     */
+    public RateLimitConfig(RateLimitInterceptor rateLimitInterceptor) {
+        this.rateLimitInterceptor = rateLimitInterceptor;
+    }
 
-  /**
-   * Registers the RateLimitInterceptor. This method adds the interceptor to the
-   * InterceptorRegistry, and specifies that it should apply to all paths under "/api/".
-   *
-   * @param registry The InterceptorRegistry to add the interceptor to.
-   */
-  @Override
-  public void addInterceptors(@NonNull InterceptorRegistry registry) {
-    registry.addInterceptor(rateLimitInterceptor).addPathPatterns("/api/**");
-  }
+    /**
+     * Registers the RateLimitInterceptor. This method adds the interceptor to the
+     * InterceptorRegistry, and specifies that it should apply to all paths under "/api/".
+     *
+     * @param registry The InterceptorRegistry to add the interceptor to.
+     */
+    @Override
+    public void addInterceptors(@NonNull InterceptorRegistry registry) {
+        registry.addInterceptor(rateLimitInterceptor).addPathPatterns("/api/**");
+    }
 }

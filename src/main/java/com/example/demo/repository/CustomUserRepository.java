@@ -9,12 +9,12 @@ import java.util.List;
  * automatically composed into Spring Data repository if extended.
  */
 public interface CustomUserRepository {
-  /**
-   * Dynamically builds a criteria query filtering by optional name/email parameters.
-   *
-   * @param nameLike substring (case-insensitive) to match against user.name (nullable)
-   * @param email exact email (case-insensitive) to match (nullable)
-   * @return users satisfying provided filters
-   */
-  List<User> findUsingCriteria(String nameLike, String email);
+    /**
+     * Dynamically builds a criteria query filtering by optional name/email parameters.
+     *
+     * @param nameLike substring (case-insensitive) to match against user.name (nullable)
+     * @param email exact email (case-insensitive) to match (nullable)
+     * @return users satisfying provided filters
+     */
+    List<User> findUsingCriteria(String nameLike, String email);
 }

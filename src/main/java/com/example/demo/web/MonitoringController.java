@@ -22,114 +22,113 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/monitoring")
 public class MonitoringController {
 
-  private static final Logger logger = LoggerFactory.getLogger(MonitoringController.class);
+    private static final Logger logger = LoggerFactory.getLogger(MonitoringController.class);
 
-  private final DatabaseHealthIndicator databaseHealthIndicator;
-  private final UserService userService;
+    private final DatabaseHealthIndicator databaseHealthIndicator;
+    private final UserService userService;
 
-  public MonitoringController(
-      DatabaseHealthIndicator databaseHealthIndicator, UserService userService) {
-    this.databaseHealthIndicator = databaseHealthIndicator;
-    this.userService = userService;
-  }
-
-  @GetMapping("/health")
-  @Timed(value = "monitoring.health.duration", description = "Time taken for health check")
-  public ResponseEntity<Map<String, Object>> getDetailedHealth() {
-    logger.debug("Performing detailed health check");
-
-    Map<String, Object> health = new HashMap<>();
-
-    // Application health
-    health.put("status", "UP");
-    health.put("timestamp", Instant.now().toString());
-
-    // Database health
-    boolean dbHealthy = databaseHealthIndicator.isHealthy();
-    Map<String, Object> database = new HashMap<>();
-    database.put("status", dbHealthy ? "UP" : "DOWN");
-    database.put(
-        "details", dbHealthy ? "Database connection successful" : "Database connection failed");
-    health.put("database", database);
-
-    // JVM metrics
-    RuntimeMXBean runtimeBean = ManagementFactory.getRuntimeMXBean();
-    MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
-
-    Map<String, Object> jvm = new HashMap<>();
-    jvm.put("uptime", runtimeBean.getUptime());
-    jvm.put("maxMemory", memoryBean.getHeapMemoryUsage().getMax());
-    jvm.put("usedMemory", memoryBean.getHeapMemoryUsage().getUsed());
-    jvm.put(
-        "freeMemory",
-        memoryBean.getHeapMemoryUsage().getMax() - memoryBean.getHeapMemoryUsage().getUsed());
-    health.put("jvm", jvm);
-
-    // Application metrics
-    try {
-      Map<String, Object> appMetrics = new HashMap<>();
-      appMetrics.put("totalUsers", userService.getTotalUserCount());
-      health.put("application", appMetrics);
-    } catch (Exception e) {
-      logger.warn("Failed to collect application metrics", e);
-      health.put("application", Map.of("status", "ERROR", "message", "Failed to collect metrics"));
+    public MonitoringController(DatabaseHealthIndicator databaseHealthIndicator, UserService userService) {
+        this.databaseHealthIndicator = databaseHealthIndicator;
+        this.userService = userService;
     }
 
-    return ResponseEntity.ok(health);
-  }
+    @GetMapping("/health")
+    @Timed(value = "monitoring.health.duration", description = "Time taken for health check")
+    public ResponseEntity<Map<String, Object>> getDetailedHealth() {
+        logger.debug("Performing detailed health check");
 
-  @GetMapping("/metrics")
-  @PreAuthorize("hasRole('ADMIN')")
-  @Timed(value = "monitoring.metrics.duration", description = "Time taken to collect metrics")
-  public ResponseEntity<Map<String, Object>> getMetrics() {
-    logger.debug("Collecting application metrics");
+        Map<String, Object> health = new HashMap<>();
 
-    Map<String, Object> metrics = new HashMap<>();
+        // Application health
+        health.put("status", "UP");
+        health.put("timestamp", Instant.now().toString());
 
-    // System metrics
-    Runtime runtime = Runtime.getRuntime();
-    Map<String, Object> system = new HashMap<>();
-    system.put("processors", runtime.availableProcessors());
-    system.put("totalMemory", runtime.totalMemory());
-    system.put("freeMemory", runtime.freeMemory());
-    system.put("maxMemory", runtime.maxMemory());
-    metrics.put("system", system);
+        // Database health
+        boolean dbHealthy = databaseHealthIndicator.isHealthy();
+        Map<String, Object> database = new HashMap<>();
+        database.put("status", dbHealthy ? "UP" : "DOWN");
+        database.put("details", dbHealthy ? "Database connection successful" : "Database connection failed");
+        health.put("database", database);
 
-    // Application metrics
-    Map<String, Object> application = new HashMap<>();
-    try {
-      application.put("userCount", userService.getTotalUserCount());
-      application.put("databaseStatus", databaseHealthIndicator.getHealthStatus());
-    } catch (Exception e) {
-      logger.warn("Error collecting application metrics", e);
-      application.put("error", "Failed to collect some metrics");
+        // JVM metrics
+        RuntimeMXBean runtimeBean = ManagementFactory.getRuntimeMXBean();
+        MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
+
+        Map<String, Object> jvm = new HashMap<>();
+        jvm.put("uptime", runtimeBean.getUptime());
+        jvm.put("maxMemory", memoryBean.getHeapMemoryUsage().getMax());
+        jvm.put("usedMemory", memoryBean.getHeapMemoryUsage().getUsed());
+        jvm.put(
+                "freeMemory",
+                memoryBean.getHeapMemoryUsage().getMax()
+                        - memoryBean.getHeapMemoryUsage().getUsed());
+        health.put("jvm", jvm);
+
+        // Application metrics
+        try {
+            Map<String, Object> appMetrics = new HashMap<>();
+            appMetrics.put("totalUsers", userService.getTotalUserCount());
+            health.put("application", appMetrics);
+        } catch (Exception e) {
+            logger.warn("Failed to collect application metrics", e);
+            health.put("application", Map.of("status", "ERROR", "message", "Failed to collect metrics"));
+        }
+
+        return ResponseEntity.ok(health);
     }
-    metrics.put("application", application);
 
-    metrics.put("timestamp", Instant.now().toString());
+    @GetMapping("/metrics")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Timed(value = "monitoring.metrics.duration", description = "Time taken to collect metrics")
+    public ResponseEntity<Map<String, Object>> getMetrics() {
+        logger.debug("Collecting application metrics");
 
-    return ResponseEntity.ok(metrics);
-  }
+        Map<String, Object> metrics = new HashMap<>();
 
-  @GetMapping("/readiness")
-  public ResponseEntity<Map<String, String>> getReadiness() {
-    Map<String, String> readiness = new HashMap<>();
+        // System metrics
+        Runtime runtime = Runtime.getRuntime();
+        Map<String, Object> system = new HashMap<>();
+        system.put("processors", runtime.availableProcessors());
+        system.put("totalMemory", runtime.totalMemory());
+        system.put("freeMemory", runtime.freeMemory());
+        system.put("maxMemory", runtime.maxMemory());
+        metrics.put("system", system);
 
-    boolean ready = databaseHealthIndicator.isHealthy();
+        // Application metrics
+        Map<String, Object> application = new HashMap<>();
+        try {
+            application.put("userCount", userService.getTotalUserCount());
+            application.put("databaseStatus", databaseHealthIndicator.getHealthStatus());
+        } catch (Exception e) {
+            logger.warn("Error collecting application metrics", e);
+            application.put("error", "Failed to collect some metrics");
+        }
+        metrics.put("application", application);
 
-    readiness.put("status", ready ? "READY" : "NOT_READY");
-    readiness.put("database", databaseHealthIndicator.getHealthStatus());
-    readiness.put("timestamp", Instant.now().toString());
+        metrics.put("timestamp", Instant.now().toString());
 
-    return ready ? ResponseEntity.ok(readiness) : ResponseEntity.status(503).body(readiness);
-  }
+        return ResponseEntity.ok(metrics);
+    }
 
-  @GetMapping("/liveness")
-  public ResponseEntity<Map<String, String>> getLiveness() {
-    Map<String, String> liveness = new HashMap<>();
-    liveness.put("status", "ALIVE");
-    liveness.put("timestamp", Instant.now().toString());
+    @GetMapping("/readiness")
+    public ResponseEntity<Map<String, String>> getReadiness() {
+        Map<String, String> readiness = new HashMap<>();
 
-    return ResponseEntity.ok(liveness);
-  }
+        boolean ready = databaseHealthIndicator.isHealthy();
+
+        readiness.put("status", ready ? "READY" : "NOT_READY");
+        readiness.put("database", databaseHealthIndicator.getHealthStatus());
+        readiness.put("timestamp", Instant.now().toString());
+
+        return ready ? ResponseEntity.ok(readiness) : ResponseEntity.status(503).body(readiness);
+    }
+
+    @GetMapping("/liveness")
+    public ResponseEntity<Map<String, String>> getLiveness() {
+        Map<String, String> liveness = new HashMap<>();
+        liveness.put("status", "ALIVE");
+        liveness.put("timestamp", Instant.now().toString());
+
+        return ResponseEntity.ok(liveness);
+    }
 }

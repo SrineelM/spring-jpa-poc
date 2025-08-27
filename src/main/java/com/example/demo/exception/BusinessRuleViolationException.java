@@ -7,29 +7,29 @@ package com.example.demo.exception;
  */
 public class BusinessRuleViolationException extends RuntimeException {
 
-  /** Categorical identifier (e.g. "UNIQUE_EMAIL", "MAX_LIMIT_EXCEEDED"). */
-  private final String ruleType;
+    /** Categorical identifier (e.g. "UNIQUE_EMAIL", "MAX_LIMIT_EXCEEDED"). */
+    private final String ruleType;
 
-  /** The value that caused the violation – useful for logging / client feedback. */
-  private final Object violatedValue;
+    /** The value that caused the violation – useful for logging / client feedback. */
+    private final Object violatedValue;
 
-  public BusinessRuleViolationException(String message, String ruleType, Object violatedValue) {
-    super(message); // human readable description of the broken rule
-    this.ruleType = ruleType;
-    this.violatedValue = violatedValue;
-  }
+    public BusinessRuleViolationException(String message, String ruleType, Object violatedValue) {
+        super(message); // human readable description of the broken rule
+        this.ruleType = ruleType;
+        this.violatedValue = violatedValue;
+    }
 
-  public BusinessRuleViolationException(String message) {
-    super(message);
-    this.ruleType = "UNKNOWN"; // fallback when no explicit category supplied
-    this.violatedValue = null;
-  }
+    public BusinessRuleViolationException(String message) {
+        super(message);
+        this.ruleType = "UNKNOWN"; // fallback when no explicit category supplied
+        this.violatedValue = null;
+    }
 
-  public String getRuleType() {
-    return ruleType;
-  }
+    public String getRuleType() {
+        return ruleType;
+    }
 
-  public Object getViolatedValue() {
-    return violatedValue;
-  }
+    public Object getViolatedValue() {
+        return violatedValue;
+    }
 }

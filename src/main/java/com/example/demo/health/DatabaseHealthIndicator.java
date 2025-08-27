@@ -17,51 +17,51 @@ import org.springframework.stereotype.Component;
 @Component
 public class DatabaseHealthIndicator implements HealthIndicator {
 
-  private static final Logger logger = LoggerFactory.getLogger(DatabaseHealthIndicator.class);
+    private static final Logger logger = LoggerFactory.getLogger(DatabaseHealthIndicator.class);
 
-  private final DataSource dataSource;
+    private final DataSource dataSource;
 
-  public DatabaseHealthIndicator(DataSource dataSource) {
-    this.dataSource = dataSource; // injected pooled DataSource (Hikari, etc.)
-  }
-
-  @Override
-  @Timed(value = "health.db", description = "Time taken to perform DB health check")
-  public Health health() {
-    long start = System.currentTimeMillis(); // capture start for timing metric detail
-    try (Connection connection = dataSource.getConnection()) { // borrow connection from pool
-      boolean valid = connection.isValid(1); // active network round trip ping (1s timeout)
-      long duration = System.currentTimeMillis() - start; // compute latency
-      if (valid) {
-        // Expose granular details so observability stack can chart validation latency trends
-        return Health.up()
-            .withDetail("validated", true)
-            .withDetail("validationTimeMs", duration)
-            .build();
-      } else {
-        return Health.down()
-            .withDetail("validated", false)
-            .withDetail("validationTimeMs", duration)
-            .build();
-      }
-    } catch (SQLException ex) {
-      long duration = System.currentTimeMillis() - start;
-      logger.error("Database health check failed", ex); // include stack for root cause
-      return Health.down(ex)
-          .withDetail("validated", false)
-          .withDetail("validationTimeMs", duration)
-          .withDetail("sqlState", ex.getSQLState()) // driver specific SQLSTATE
-          .withDetail("errorCode", ex.getErrorCode()) // vendor specific error code
-          .build();
+    public DatabaseHealthIndicator(DataSource dataSource) {
+        this.dataSource = dataSource; // injected pooled DataSource (Hikari, etc.)
     }
-  }
 
-  // Convenience methods retained for existing controller usage (backward compatibility)
-  public boolean isHealthy() {
-    return health().getStatus().getCode().equalsIgnoreCase("UP");
-  }
+    @Override
+    @Timed(value = "health.db", description = "Time taken to perform DB health check")
+    public Health health() {
+        long start = System.currentTimeMillis(); // capture start for timing metric detail
+        try (Connection connection = dataSource.getConnection()) { // borrow connection from pool
+            boolean valid = connection.isValid(1); // active network round trip ping (1s timeout)
+            long duration = System.currentTimeMillis() - start; // compute latency
+            if (valid) {
+                // Expose granular details so observability stack can chart validation latency trends
+                return Health.up()
+                        .withDetail("validated", true)
+                        .withDetail("validationTimeMs", duration)
+                        .build();
+            } else {
+                return Health.down()
+                        .withDetail("validated", false)
+                        .withDetail("validationTimeMs", duration)
+                        .build();
+            }
+        } catch (SQLException ex) {
+            long duration = System.currentTimeMillis() - start;
+            logger.error("Database health check failed", ex); // include stack for root cause
+            return Health.down(ex)
+                    .withDetail("validated", false)
+                    .withDetail("validationTimeMs", duration)
+                    .withDetail("sqlState", ex.getSQLState()) // driver specific SQLSTATE
+                    .withDetail("errorCode", ex.getErrorCode()) // vendor specific error code
+                    .build();
+        }
+    }
 
-  public String getHealthStatus() {
-    return health().getStatus().getCode();
-  }
+    // Convenience methods retained for existing controller usage (backward compatibility)
+    public boolean isHealthy() {
+        return health().getStatus().getCode().equalsIgnoreCase("UP");
+    }
+
+    public String getHealthStatus() {
+        return health().getStatus().getCode();
+    }
 }

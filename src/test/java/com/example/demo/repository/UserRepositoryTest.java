@@ -11,15 +11,16 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 @DataJpaTest
 class UserRepositoryTest {
 
-  @Autowired private UserRepository repo;
+    @Autowired
+    private UserRepository repo;
 
-  @Test
-  void basicSaveAndFind() {
-    User u = new User();
-    u.setName("John");
-    u.setEmail("john@example.com");
-    u.setRole(Role.USER);
-    repo.save(u);
-    assertThat(repo.findByEmailWithProfile("john@example.com")).isPresent();
-  }
+    @Test
+    void basicSaveAndFind() {
+        User u = new User();
+        u.setName("John");
+        u.setEmail("john@example.com");
+        u.setRole(Role.USER);
+        repo.save(u);
+        assertThat(repo.findByEmailWithProfile("john@example.com")).isPresent();
+    }
 }

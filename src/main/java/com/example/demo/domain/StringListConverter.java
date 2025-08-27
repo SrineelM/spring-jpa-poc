@@ -17,33 +17,33 @@ import java.util.stream.Collectors;
 @Converter
 public class StringListConverter implements AttributeConverter<List<String>, String> {
 
-  private static final String DELIMITER = ",";
+    private static final String DELIMITER = ",";
 
-  /**
-   * Converts a List of Strings into a single String for database storage.
-   *
-   * @param attribute The list of strings from the entity.
-   * @return A single, comma-separated string. Returns null if the input list is null.
-   */
-  @Override
-  public String convertToDatabaseColumn(List<String> attribute) {
-    if (attribute == null || attribute.isEmpty()) {
-      return null;
+    /**
+     * Converts a List of Strings into a single String for database storage.
+     *
+     * @param attribute The list of strings from the entity.
+     * @return A single, comma-separated string. Returns null if the input list is null.
+     */
+    @Override
+    public String convertToDatabaseColumn(List<String> attribute) {
+        if (attribute == null || attribute.isEmpty()) {
+            return null;
+        }
+        return String.join(DELIMITER, attribute);
     }
-    return String.join(DELIMITER, attribute);
-  }
 
-  /**
-   * Converts a String from the database back into a List of Strings for the entity.
-   *
-   * @param dbData The comma-separated string from the database.
-   * @return A List of strings. Returns an empty list if the database data is null or blank.
-   */
-  @Override
-  public List<String> convertToEntityAttribute(String dbData) {
-    if (dbData == null || dbData.isBlank()) {
-      return Collections.emptyList();
+    /**
+     * Converts a String from the database back into a List of Strings for the entity.
+     *
+     * @param dbData The comma-separated string from the database.
+     * @return A List of strings. Returns an empty list if the database data is null or blank.
+     */
+    @Override
+    public List<String> convertToEntityAttribute(String dbData) {
+        if (dbData == null || dbData.isBlank()) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(dbData.split(DELIMITER)).map(String::trim).collect(Collectors.toList());
     }
-    return Arrays.stream(dbData.split(DELIMITER)).map(String::trim).collect(Collectors.toList());
-  }
 }

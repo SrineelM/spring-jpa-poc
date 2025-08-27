@@ -11,19 +11,19 @@ import org.slf4j.LoggerFactory;
  */
 public class AuditEntityListener {
 
-  private static final Logger log = LoggerFactory.getLogger(AuditEntityListener.class);
+    private static final Logger log = LoggerFactory.getLogger(AuditEntityListener.class);
 
-  /**
-   * This method is executed before a new entity is saved to the database. It is marked with the
-   * {@link PrePersist} annotation, which is a JPA lifecycle callback.
-   *
-   * @param entity The entity object that is about to be persisted.
-   */
-  @PrePersist
-  public void beforeCreate(Object entity) {
-    log.info(
-        "[AuditEntityListener] About to persist a new {} at {}",
-        entity.getClass().getSimpleName(),
-        Instant.now());
-  }
+    /**
+     * This method is executed before a new entity is saved to the database. It is marked with the
+     * {@link PrePersist} annotation, which is a JPA lifecycle callback.
+     *
+     * @param entity The entity object that is about to be persisted.
+     */
+    @PrePersist
+    public void beforeCreate(Object entity) {
+        log.info(
+                "[AuditEntityListener] About to persist a new {} at {}",
+                entity.getClass().getSimpleName(),
+                Instant.now());
+    }
 }

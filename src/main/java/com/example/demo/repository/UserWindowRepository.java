@@ -11,12 +11,11 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserWindowRepository extends JpaRepository<com.example.demo.domain.User, Long> {
 
-  @Query(
-      value =
-          "SELECT u.id, u.name, u.role, u.created_date, "
-              + "RANK() OVER (PARTITION BY u.role ORDER BY u.created_date DESC) AS role_rank, "
-              + "COUNT(*) OVER (PARTITION BY u.role) AS total_in_role "
-              + "FROM users u",
-      nativeQuery = true)
-  List<Object[]> getUserRankingRaw(); // raw array: map to DTO (UserRankDTO) at service layer
+    @Query(
+            value = "SELECT u.id, u.name, u.role, u.created_date, "
+                    + "RANK() OVER (PARTITION BY u.role ORDER BY u.created_date DESC) AS role_rank, "
+                    + "COUNT(*) OVER (PARTITION BY u.role) AS total_in_role "
+                    + "FROM users u",
+            nativeQuery = true)
+    List<Object[]> getUserRankingRaw(); // raw array: map to DTO (UserRankDTO) at service layer
 }

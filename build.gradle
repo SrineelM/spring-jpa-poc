@@ -92,23 +92,13 @@ test {
 // --- Code Style / Formatting (Spotless) ---
 spotless {
     java {
-        // Use Google Java Format for consistent style across contributors.
-        googleJavaFormat('1.17.0')
-            .reflowLongStrings()
-        // Exclude generated sources (if any appear under build/)
-        target 'src/**/*.java'
-        // License header example (optional) – uncomment & adapt if needed.
-        // licenseHeader '/* (c) 2025 Example Corp. */\n'
-    }
-    format 'misc', {
-        // Apply formatting to non-Java files for whitespace normalization.
-        target '*.gradle', 'gradle/**/*.gradle', 'README.md', '.github/**/*.md'
-        trimTrailingWhitespace()
-        endWithNewline()
+        palantirJavaFormat()
+        importOrder()
+        // Do not block build on formatting errors
+        enforceCheck false
     }
 }
 
-// Ensure formatting is applied automatically; we prefer fixing over failing.
-// spotlessCheck would fail the build; spotlessApply rewrites sources.
-tasks.named('compileJava') { dependsOn 'spotlessApply' }
-tasks.named('test') { dependsOn 'spotlessApply' }
+tasks.named('build') {
+    dependsOn 'spotlessApply'
+}
