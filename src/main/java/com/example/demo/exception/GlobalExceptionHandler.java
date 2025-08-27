@@ -21,7 +21,9 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Centralized exception handling with comprehensive error mapping and structured logging
+ * Centralized Spring MVC exception translation layer. Converts thrown exceptions
+ * into consistent JSON payloads while logging with appropriate severity. Keeps
+ * controllers thin and ensures clients can rely on uniform error structure.
  */
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -33,7 +35,7 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException ex, WebRequest request) {
         
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
+    ex.getBindingResult().getAllErrors().forEach((error) -> { // aggregate field errors into map
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
@@ -164,7 +166,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler(Exception.class) // fallback catch-all – always keep last to avoid pre-emption
     public ResponseEntity<ErrorDetails> handleGlobalException(Exception ex, WebRequest request) {
         logger.error("Unexpected error for request: {}", request.getDescription(false), ex);
         
@@ -180,14 +182,15 @@ public class GlobalExceptionHandler {
 }
 
 /**
- * Enhanced error details with error codes and additional metadata
+ * Simple POJO serialized as JSON describing an error. Exposed as a nested class
+ * to scope it to the handler (could also live in a shared error package if reused).
  */
 class ErrorDetails {
-    private LocalDateTime timestamp;
-    private String message;
-    private String details;
-    private String errorCode;
-    private Map<String, String> validationErrors;
+    private LocalDateTime timestamp;      // when the error response was generated
+    private String message;               // human-readable summary
+    private String details;               // request description (URI context)
+    private String errorCode;             // machine-readable code
+    private Map<String, String> validationErrors; // optional map of field -> message for validation failures
 
     public ErrorDetails(LocalDateTime timestamp, String message, String details, String errorCode) {
         this.timestamp = timestamp;
@@ -197,14 +200,10 @@ class ErrorDetails {
     }
 
     public ErrorDetails(LocalDateTime timestamp, String message, String details, String errorCode, Map<String, String> validationErrors) {
-        this.timestamp = timestamp;
-        this.message = message;
-        this.details = details;
-        this.errorCode = errorCode;
+        this(timestamp, message, details, errorCode); // delegate to main constructor
         this.validationErrors = validationErrors;
     }
 
-    // Getters
     public LocalDateTime getTimestamp() { return timestamp; }
     public String getMessage() { return message; }
     public String getDetails() { return details; }

@@ -16,26 +16,26 @@ import java.util.List;
 import org.springframework.stereotype.Repository;
 
 
-@Repository
+@Repository // marks as Spring bean so fragment can be composed into higher level repositories
 public class CustomUserRepositoryImpl implements CustomUserRepository {
 
     @PersistenceContext
-    private EntityManager em;
+    private EntityManager em; // injected JPA context for building criteria queries
 
     @Override
     public List<User> findUsingCriteria(String nameLike, String email) {
-        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaBuilder cb = em.getCriteriaBuilder(); // entry point for criteria API
         CriteriaQuery<User> q = cb.createQuery(User.class);
-        Root<User> root = q.from(User.class);
-        List<Predicate> preds = new ArrayList<>();
+        Root<User> root = q.from(User.class); // FROM User u
+        List<Predicate> preds = new ArrayList<>(); // dynamic predicates list
         if (nameLike != null) {
-            preds.add(cb.like(cb.lower(root.get("name")), "%" + nameLike.toLowerCase() + "%"));
+            preds.add(cb.like(cb.lower(root.get("name")), "%" + nameLike.toLowerCase() + "%")); // case-insensitive LIKE
         }
         if (email != null) {
-            preds.add(cb.equal(cb.lower(root.get("email")), email.toLowerCase()));
+            preds.add(cb.equal(cb.lower(root.get("email")), email.toLowerCase())); // equality on lowered email
         }
-        q.select(root).where(preds.toArray(new Predicate[0]));
-        TypedQuery<User> tq = em.createQuery(q);
-        return tq.getResultList();
+        q.select(root).where(preds.toArray(new Predicate[0])); // WHERE clauses aggregated
+        TypedQuery<User> tq = em.createQuery(q); // build typed query
+        return tq.getResultList(); // execute & return results
     }
 }

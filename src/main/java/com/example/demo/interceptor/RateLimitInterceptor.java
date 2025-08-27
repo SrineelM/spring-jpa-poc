@@ -21,7 +21,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
     private static final Logger logger = LoggerFactory.getLogger(RateLimitInterceptor.class);
     
-    private final ConcurrentHashMap<String, TokenBucket> buckets = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, TokenBucket> buckets = new ConcurrentHashMap<>(); // clientId -> bucket
     // (Memory) In a long‑running process this map can grow unbounded with unique client IDs (IPs).
     // (Prod) Use Caffeine/Guava cache with expireAfterAccess or implement scheduled cleanup.
     // Simple lightweight cleanup hook could iterate occasionally & remove stale buckets based on lastRefillTime.
@@ -32,18 +32,18 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) throws Exception {
-        String clientId = getClientIdentifier(request);
-        String requestPath = request.getRequestURI();
+    String clientId = getClientIdentifier(request); // derive stable identifier per client
+    String requestPath = request.getRequestURI(); // endpoint for potential differential policies
         
-        int limit = isAuthEndpoint(requestPath) ? AUTH_REQUESTS_PER_MINUTE : API_REQUESTS_PER_MINUTE;
+    int limit = isAuthEndpoint(requestPath) ? AUTH_REQUESTS_PER_MINUTE : API_REQUESTS_PER_MINUTE; // stricter for auth endpoints
         
-        TokenBucket bucket = buckets.computeIfAbsent(clientId, k -> new TokenBucket(limit));
+    TokenBucket bucket = buckets.computeIfAbsent(clientId, k -> new TokenBucket(limit)); // lazy create per new client
         // (Optional) Opportunistic cleanup every N requests (cheap heuristic for demo)
         if (buckets.size() > 1000 && bucket.lastRefillTime.get() % 100 == 0) {
             buckets.entrySet().removeIf(e -> e.getValue().isStale());
         }
         
-        if (!bucket.tryConsume()) {
+    if (!bucket.tryConsume()) { // attempt token consumption; reject on exhaustion
             logger.warn("Rate limit exceeded for client: {} on path: {}", clientId, requestPath);
             response.setStatus(429); // Too Many Requests
             response.setContentType("application/json");
@@ -55,7 +55,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     }
 
     private String getClientIdentifier(HttpServletRequest request) {
-        // Use IP address as client identifier
+        // Prefer first X-Forwarded-For IP (client origin) when behind proxies; fall back to remote address.
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
             return xForwardedFor.split(",")[0].trim();
@@ -63,9 +63,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         return request.getRemoteAddr();
     }
 
-    private boolean isAuthEndpoint(String path) {
-        return path.startsWith("/api/auth");
-    }
+    private boolean isAuthEndpoint(String path) { return path.startsWith("/api/auth"); }
 
     /**
      * Simple token bucket implementation
@@ -78,33 +76,30 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         private final long ttlMs = 5 * 60 * 1000; // (Cleanup) consider bucket stale after 5 minutes of inactivity
 
         public TokenBucket(int capacity) {
-            this.capacity = capacity;
-            this.tokens = new AtomicInteger(capacity);
+            this.capacity = capacity; // maximum tokens available per interval
+            this.tokens = new AtomicInteger(capacity); // start full
             this.lastRefillTime = new AtomicLong(System.currentTimeMillis());
         }
 
-    public boolean tryConsume() {
-            refillIfNeeded();
-            
+        public boolean tryConsume() {
+            refillIfNeeded(); // ensure tokens are up to date prior to consumption
             if (tokens.get() > 0) {
-                tokens.decrementAndGet();
+                tokens.decrementAndGet(); // reserve one token for this request
                 return true;
             }
-            return false;
+            return false; // no capacity left
         }
 
         private void refillIfNeeded() {
             long now = System.currentTimeMillis();
             long lastRefill = lastRefillTime.get();
-            
+            // Single interval refill strategy: reset tokens to capacity after interval elapses
             if (now - lastRefill >= refillIntervalMs) {
-                if (lastRefillTime.compareAndSet(lastRefill, now)) {
+                if (lastRefillTime.compareAndSet(lastRefill, now)) { // CAS to avoid race in multi-thread scenario
                     tokens.set(capacity);
                 }
             }
         }
-        private boolean isStale() {
-            return System.currentTimeMillis() - lastRefillTime.get() > ttlMs;
-        }
+        private boolean isStale() { return System.currentTimeMillis() - lastRefillTime.get() > ttlMs; }
     }
 }

@@ -3,19 +3,16 @@ package com.example.demo.repository;
 import com.example.demo.domain.Role;
 import com.example.demo.domain.User;
 import com.example.demo.dto.UserSummaryDto;
-import org.springframework.data.domain.*;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.jpa.repository.query.Procedure;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.data.repository.query.QueryByExampleExecutor;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User>, QueryByExampleExecutor<User> {
+public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
     /**
      * Finds a user by their email and eagerly fetches their profile in the same query.
@@ -72,12 +69,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
 
     @Procedure(name = "User.countByRole")
-    Long countPostsForRole(@Param("role_in") String role);
+    Long countPostsForRole(@Param("role_in") String role); // mapped stored procedure example
 
     @Modifying
     @Query("UPDATE User u SET u.name = :name WHERE u.id = :id")
-    int updateName(@Param("id") Long id, @Param("name") String name);
+    int updateName(@Param("id") Long id, @Param("name") String name); // bulk update (returns rows affected)
 
     @Query("SELECT u FROM User u WHERE LOWER(u.name) LIKE LOWER(CONCAT('%', :term, '%'))")
-    List<User> searchByNameLike(@Param("term") String term);
+    List<User> searchByNameLike(@Param("term") String term); // case-insensitive name search
 }

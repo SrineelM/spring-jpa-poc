@@ -23,17 +23,18 @@ public class DatabaseHealthIndicator implements HealthIndicator {
     private final DataSource dataSource;
 
     public DatabaseHealthIndicator(DataSource dataSource) {
-        this.dataSource = dataSource;
+        this.dataSource = dataSource; // injected pooled DataSource (Hikari, etc.)
     }
 
     @Override
     @Timed(value = "health.db", description = "Time taken to perform DB health check")
     public Health health() {
-        long start = System.currentTimeMillis();
-        try (Connection connection = dataSource.getConnection()) {
-            boolean valid = connection.isValid(1); // 1 second validation timeout
-            long duration = System.currentTimeMillis() - start;
+        long start = System.currentTimeMillis(); // capture start for timing metric detail
+        try (Connection connection = dataSource.getConnection()) { // borrow connection from pool
+            boolean valid = connection.isValid(1); // active network round trip ping (1s timeout)
+            long duration = System.currentTimeMillis() - start; // compute latency
             if (valid) {
+                // Expose granular details so observability stack can chart validation latency trends
                 return Health.up()
                         .withDetail("validated", true)
                         .withDetail("validationTimeMs", duration)
@@ -46,12 +47,12 @@ public class DatabaseHealthIndicator implements HealthIndicator {
             }
         } catch (SQLException ex) {
             long duration = System.currentTimeMillis() - start;
-            logger.error("Database health check failed", ex);
+            logger.error("Database health check failed", ex); // include stack for root cause
             return Health.down(ex)
                     .withDetail("validated", false)
                     .withDetail("validationTimeMs", duration)
-                    .withDetail("sqlState", ex.getSQLState())
-                    .withDetail("errorCode", ex.getErrorCode())
+                    .withDetail("sqlState", ex.getSQLState()) // driver specific SQLSTATE
+                    .withDetail("errorCode", ex.getErrorCode()) // vendor specific error code
                     .build();
         }
     }
