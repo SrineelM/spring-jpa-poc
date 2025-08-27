@@ -6,12 +6,13 @@ import java.util.*;
 /**
  * Represents a user in the system.
  * This entity is mapped to the "users" table and includes relationships
- * with other entities like Profile, Post, and Group.
+ * with other entities like Profile, Post, and Group. It serves as a central
+ * part of the domain model.
  */
-@Entity
-@Table(name = "users")
-@NamedQuery(name = "User.findByRole", query = "SELECT u FROM User u WHERE u.role = :role")
-@NamedStoredProcedureQuery(
+@Entity // Declares this class as a JPA entity.
+@Table(name = "users") // Specifies the table name in the database.
+@NamedQuery(name = "User.findByRole", query = "SELECT u FROM User u WHERE u.role = :role") // Defines a static JPQL query.
+@NamedStoredProcedureQuery( // Defines a mapping for a stored procedure.
     name = "User.countByRole",
     procedureName = "COUNT_USERS_BY_ROLE",
     parameters = {
@@ -19,7 +20,7 @@ import java.util.*;
         @StoredProcedureParameter(mode = ParameterMode.OUT, name = "count_out", type = Long.class)
     }
 )
-@EntityListeners({AuditEntityListener.class, UserEntityListener.class})
+@EntityListeners({AuditEntityListener.class, UserEntityListener.class}) // Registers entity listeners for this entity.
 // Defines an entity graph to solve the N+1 query problem.
 // This graph specifies that when fetching a User, their associated Profile and Posts should also be fetched in the same query.
 @NamedEntityGraph(
@@ -33,6 +34,7 @@ public class User extends BaseEntity {
 
     /**
      * The user's email, which is unique and used for login.
+     * Marked as non-nullable and unique to ensure data integrity.
      */
     @Column(nullable = false, unique = true)
     private String email;
@@ -44,19 +46,22 @@ public class User extends BaseEntity {
     private String name;
 
     /**
-     * The user's password.
+     * The user's hashed password.
+     * Should never be stored in plain text.
      */
     @Column(nullable = false)
     private String password;
 
     /**
      * The user's role, which determines their permissions.
+     * Stored as a string in the database for readability.
      */
     @Enumerated(EnumType.STRING)
     private Role role;
 
     /**
      * The user's embedded address information.
+     * The Address class is an @Embeddable, so its fields are part of the users table.
      */
     @Embedded
     private Address address;
@@ -67,6 +72,8 @@ public class User extends BaseEntity {
      * However, if you fetch a list of users and then access their profiles in a loop,
      * it will trigger an N+1 query problem (1 query for users, N queries for profiles).
      * To solve this, use a JOIN FETCH query or an @EntityGraph.
+     * `cascade = CascadeType.ALL` means operations (persist, merge, remove, etc.) on User will propagate to Profile.
+     * `orphanRemoval = true` means that if a Profile is disassociated from a User, it should be deleted.
      */
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Profile profile;
@@ -88,6 +95,7 @@ public class User extends BaseEntity {
     /**
      * The set of groups the user belongs to.
      * FetchType is LAZY by default for many-to-many.
+     * A join table `user_groups` is used to manage this relationship.
      */
     @ManyToMany
     @JoinTable(name = "user_groups",
@@ -97,6 +105,7 @@ public class User extends BaseEntity {
 
     /**
      * A collection of simple string tags associated with the user.
+     * This is an example of an element collection, where the elements are basic types, not entities.
      */
     @ElementCollection
     @CollectionTable(name = "user_tags", joinColumns = @JoinColumn(name = "user_id"))
@@ -105,7 +114,7 @@ public class User extends BaseEntity {
 
     /**
      * A temporary token used for operations like password reset.
-     * This field is not persisted to the database.
+     * This field is not persisted to the database, as indicated by the @Transient annotation.
      */
     @Transient
     private String temporaryToken;
@@ -139,7 +148,8 @@ public class User extends BaseEntity {
     public Set<String> getTags() { return tags; }
     public void setTemporaryToken(String t) { this.temporaryToken = t; }
 
-    // Helper methods for bidirectional relationships
+    // Helper methods for maintaining bidirectional relationships.
+    // These methods ensure that both sides of the relationship are in sync.
 
     public void addPost(Post post) {
         posts.add(post);
@@ -171,6 +181,10 @@ public class User extends BaseEntity {
         group.getUsers().remove(this);
     }
 
+    /**
+     * Overriding equals() based on the business key (email).
+     * This is important for entities to behave correctly in collections and when attached/detached from the persistence context.
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -179,6 +193,9 @@ public class User extends BaseEntity {
         return Objects.equals(email, user.email);
     }
 
+    /**
+     * Overriding hashCode() to be consistent with the equals() method.
+     */
     @Override
     public int hashCode() {
         return Objects.hash(email);

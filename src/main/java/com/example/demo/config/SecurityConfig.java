@@ -21,50 +21,99 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 
 /**
- * Enhanced security configuration with comprehensive security headers and CORS
+ * Enhanced security configuration with comprehensive security headers and CORS.
+ * This class configures Spring Security for a stateless JWT-based authentication system.
+ * 
+ * Key features:
+ * - JWT-based stateless authentication
+ * - CORS configuration for cross-origin requests
+ * - Security headers for protection against common attacks
+ * - Role-based authorization with method-level security
+ * - Custom authentication entry point for unauthorized requests
  */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
 public class SecurityConfig {
 
-    private final JwtAuthenticationEntryPoint authenticationEntryPoint;
-    private final JwtAuthenticationFilter authenticationFilter;
+    // Dependencies injected via constructor
+    private final JwtAuthenticationEntryPoint authenticationEntryPoint; // Handles unauthorized access attempts
+    private final JwtAuthenticationFilter authenticationFilter; // Processes JWT tokens on incoming requests
 
+    /**
+     * Constructor for dependency injection.
+     * Spring will automatically provide instances of the required beans.
+     */
     public SecurityConfig(JwtAuthenticationEntryPoint authenticationEntryPoint, 
                          JwtAuthenticationFilter authenticationFilter) {
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.authenticationFilter = authenticationFilter;
     }
 
-    @Bean
+    /**
+     * Defines a PasswordEncoder bean for encoding and verifying passwords.
+     * BCrypt is used for its strength and built-in salt generation.
+     * 
+     * @return A BCryptPasswordEncoder with strength 12 (higher = more secure but slower)
+     */
+    @Bean // Defines this method as a Spring bean provider
     public static PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12); // Increased strength
+        return new BCryptPasswordEncoder(12); // Increased strength from default 10 for better security
     }
 
+    /**
+     * Defines an AuthenticationManager bean.
+     * This is required for authenticating users programmatically.
+     * 
+     * @param configuration The authentication configuration provided by Spring
+     * @return The configured AuthenticationManager
+     * @throws Exception If configuration fails
+     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }
 
+    /**
+     * Defines a CORS configuration source.
+     * CORS (Cross-Origin Resource Sharing) allows the API to be accessed from different domains.
+     * 
+     * @return A CorsConfigurationSource with permissive settings for development
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+        // Allow requests from localhost on any port (for development)
         configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:*", "https://localhost:*"));
+        // Allow common HTTP methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        // Allow all headers
         configuration.setAllowedHeaders(Arrays.asList("*"));
+        // Allow credentials (cookies, authorization headers)
         configuration.setAllowCredentials(true);
+        // Cache preflight response for 1 hour
         configuration.setMaxAge(3600L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // Apply CORS configuration to all /api/** endpoints
         source.registerCorsConfiguration("/api/**", configuration);
         return source;
     }
 
+    /**
+     * Defines the main security filter chain.
+     * This method configures how HTTP requests are secured.
+     * 
+     * @param http The HttpSecurity object to configure
+     * @return A configured SecurityFilterChain
+     * @throws Exception If configuration fails
+     */
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            // Disable CSRF protection (common for stateless APIs with JWT)
             .csrf(csrf -> csrf.disable())
+            // Enable CORS with our custom configuration
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
             // Enhanced security headers
