@@ -1,49 +1,31 @@
 package com.example.demo.dto;
 
 /**
- * A Data Transfer Object (DTO) that represents the data required to register a new user.
- * This object is used as the request body for the user registration endpoint.
+ * Registration request payload. Captures the minimal attributes required to
+ * create a new user account. Additional profile fields could be added later.
  */
 public class SignUpDto {
 
-    /**
-     * The user's full name.
-     */
+    /** Human‑readable display name shown in UI / audit logs. */
     private String name;
 
     /**
-     * The user's email address. This will be used as the username for login.
+     * Unique email which doubles as the login credential. Chosen over a separate
+     * username to simplify UX. Uniqueness constraint is enforced at persistence layer.
      */
     private String email;
 
     /**
-     * The user's password.
+     * Plain text password from client. Will be encoded before persisting; NEVER
+     * log this value. Consider adding validation annotations (length, complexity).
      */
     private String password;
 
-    // Getters and Setters
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    // --- Accessors ---
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 }

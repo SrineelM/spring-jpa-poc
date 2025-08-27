@@ -1,36 +1,27 @@
 package com.example.demo.dto;
 
 /**
- * A Data Transfer Object (DTO) that represents the data required for a user to log in.
- * This object is used as the request body for the user login endpoint.
+ * Login request payload. Sent by the client when attempting to authenticate.
+ * Only contains credentials – no domain logic here; validation (e.g. @NotBlank)
+ * can be added later if Bean Validation is introduced.
  */
 public class LoginDto {
 
     /**
-     * The user's email address, which is used as the username for authentication.
+     * Email (or username) the user registered with.
+     * Acts as principal identifier in authentication.
      */
     private String email;
 
     /**
-     * The user's password.
+     * Raw password as entered by the user. It is never stored directly; the
+     * authentication layer will encode & compare it with the hashed password.
      */
     private String password;
 
-    // Getters and Setters
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    // --- Accessors ---
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 }
