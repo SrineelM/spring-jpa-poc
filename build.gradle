@@ -6,6 +6,8 @@ plugins {
     id 'org.springframework.boot' version '3.5.0'
     // The Spring Dependency Management plugin provides dependency management capabilities, allowing us to manage dependency versions in a centralized way.
     id 'io.spring.dependency-management' version '1.1.5'
+    // Spotless plugin for automatic code formatting. We will wire spotlessApply before compile so formatting is fixed rather than failing the build.
+    id 'com.diffplug.spotless' version '6.25.0'
 }
 
 // Project metadata
@@ -68,14 +70,14 @@ dependencies {
 
     // --- Documentation ---
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0' // For API documentation with Swagger UI
-    
+
     // --- Validation ---
     implementation 'org.springframework.boot:spring-boot-starter-validation' // For input validation
-    
+
     // --- Rate Limiting ---
     implementation 'com.github.vladimir-bukhtoyarov:bucket4j-core:7.6.0'
     implementation 'com.github.vladimir-bukhtoyarov:bucket4j-caffeine:7.6.0'
-    
+
     // --- Testing ---
     testImplementation 'org.springframework.boot:spring-boot-starter-test' // Core testing utilities for Spring Boot
     testImplementation 'org.springframework.security:spring-security-test' // For testing Spring Security features
@@ -86,3 +88,27 @@ test {
     // Use the JUnit Platform to run tests.
     useJUnitPlatform()
 }
+
+// --- Code Style / Formatting (Spotless) ---
+spotless {
+    java {
+        // Use Google Java Format for consistent style across contributors.
+        googleJavaFormat('1.17.0')
+            .reflowLongStrings()
+        // Exclude generated sources (if any appear under build/)
+        target 'src/**/*.java'
+        // License header example (optional) – uncomment & adapt if needed.
+        // licenseHeader '/* (c) 2025 Example Corp. */\n'
+    }
+    format 'misc', {
+        // Apply formatting to non-Java files for whitespace normalization.
+        target '*.gradle', 'gradle/**/*.gradle', 'README.md', '.github/**/*.md'
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+// Ensure formatting is applied automatically; we prefer fixing over failing.
+// spotlessCheck would fail the build; spotlessApply rewrites sources.
+tasks.named('compileJava') { dependsOn 'spotlessApply' }
+tasks.named('test') { dependsOn 'spotlessApply' }

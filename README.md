@@ -35,7 +35,7 @@ End‑to‑end reference implementation demonstrating pragmatic, production‑gr
 ---
 
 ## Architecture Overview
-Layered architecture with clear vertical slices: 
+Layered architecture with clear vertical slices:
 
 | Layer | Responsibility | Key Artifacts |
 |-------|----------------|---------------|
@@ -262,4 +262,3 @@ Documenting conscious trade‑offs taken in this reference implementation:
 ---
 
 Feel free to fork, explore, and adapt. Contributions welcome via PRs (tests + concise rationale in description). Enjoy building resilient, observable services!
-
