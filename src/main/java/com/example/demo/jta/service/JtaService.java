@@ -17,7 +17,8 @@ public class JtaService {
     // Repository for the secondary database.
     private final SecondaryAccountRepository secondaryAccountRepository;
 
-    public JtaService(PrimaryAccountRepository primaryAccountRepository, SecondaryAccountRepository secondaryAccountRepository) {
+    public JtaService(
+            PrimaryAccountRepository primaryAccountRepository, SecondaryAccountRepository secondaryAccountRepository) {
         this.primaryAccountRepository = primaryAccountRepository;
         this.secondaryAccountRepository = secondaryAccountRepository;
     }
@@ -54,7 +55,8 @@ public class JtaService {
 
         // To simulate a failure, one could throw an exception here.
         // For example: if (true) { throw new RuntimeException("Simulating a failure during transfer!"); }
-        // If this exception were thrown, both the save operations above would be rolled back by the JTA transaction manager.
+        // If this exception were thrown, both the save operations above would be rolled back by the JTA transaction
+        // manager.
 
         // Save the updated account in the secondary database.
         secondaryAccountRepository.save(toAccount);

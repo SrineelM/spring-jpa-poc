@@ -1,6 +1,8 @@
 package com.example.demo.jta;
 
 import com.atomikos.jdbc.AtomikosDataSourceBean;
+import java.util.Properties;
+import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
@@ -9,9 +11,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
-
-import javax.sql.DataSource;
-import java.util.Properties;
 
 /**
  * Consolidated configuration for setting up multiple data sources to demonstrate JTA (Java Transaction API)
@@ -82,7 +81,7 @@ public class DataSourceConfig {
             basePackages = "com.example.demo.jta.primary",
             entityManagerFactoryRef = "primaryEntityManagerFactory",
             transactionManagerRef = "transactionManager" // Shared JTA transaction manager
-    )
+            )
     public static class PrimaryDbConfig {
         /**
          * Configures the JPA EntityManagerFactory for the primary data source.
@@ -94,10 +93,8 @@ public class DataSourceConfig {
         @Primary
         @Bean(name = "primaryEntityManagerFactory")
         public LocalContainerEntityManagerFactoryBean primaryEntityManagerFactory(
-                EntityManagerFactoryBuilder builder,
-                @Qualifier("primaryDataSource") DataSource dataSource) {
-            return builder
-                    .dataSource(dataSource)
+                EntityManagerFactoryBuilder builder, @Qualifier("primaryDataSource") DataSource dataSource) {
+            return builder.dataSource(dataSource)
                     .packages("com.example.demo.jta.Account") // Package where entities are located
                     .persistenceUnit("primary") // A unique name for the persistence unit
                     .properties(jpaProperties()) // Apply common JTA properties
@@ -114,7 +111,7 @@ public class DataSourceConfig {
             basePackages = "com.example.demo.jta.secondary",
             entityManagerFactoryRef = "secondaryEntityManagerFactory",
             transactionManagerRef = "transactionManager" // Shared JTA transaction manager
-    )
+            )
     public static class SecondaryDbConfig {
         /**
          * Configures the JPA EntityManagerFactory for the secondary data source.
@@ -125,10 +122,8 @@ public class DataSourceConfig {
          */
         @Bean(name = "secondaryEntityManagerFactory")
         public LocalContainerEntityManagerFactoryBean secondaryEntityManagerFactory(
-                EntityManagerFactoryBuilder builder,
-                @Qualifier("secondaryDataSource") DataSource dataSource) {
-            return builder
-                    .dataSource(dataSource)
+                EntityManagerFactoryBuilder builder, @Qualifier("secondaryDataSource") DataSource dataSource) {
+            return builder.dataSource(dataSource)
                     .packages("com.example.demo.jta.Account") // Can reuse the same entity
                     .persistenceUnit("secondary") // A unique name for the persistence unit
                     .properties(jpaProperties()) // Apply common JTA properties
