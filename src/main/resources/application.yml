@@ -13,6 +13,19 @@ spring:
     type: caffeine
     caffeine:
       spec: maximumSize=500,expireAfterAccess=10m
+  jta:
+    atomikos:
+      datasource:
+        primary:
+          xa-data-source-class-name: org.h2.jdbcx.JdbcDataSource
+          xa-properties:
+            URL: jdbc:h2:mem:primarydb;DB_CLOSE_DELAY=-1
+          max-pool-size: 10
+        secondary:
+          xa-data-source-class-name: org.h2.jdbcx.JdbcDataSource
+          xa-properties:
+            URL: jdbc:h2:mem:secondarydb;DB_CLOSE_DELAY=-1
+          max-pool-size: 10
 
 management:
   metrics:

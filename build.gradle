@@ -45,6 +45,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-aop' // For aspect-oriented programming, required by Resilience4j
     implementation 'org.springframework.boot:spring-boot-starter-actuator' // For monitoring and managing the application
     implementation 'org.springframework.boot:spring-boot-starter-security' // For authentication and authorization
+    implementation 'org.springframework.boot:spring-boot-starter-jta-atomikos'
 
     // --- Resilience4j (Fault Tolerance) ---
     implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j' // For the Circuit Breaker pattern

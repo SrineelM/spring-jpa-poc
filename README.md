@@ -14,22 +14,23 @@ End‑to‑end reference implementation demonstrating pragmatic, production‑gr
 3. [Module / Package Structure](#module--package-structure)
 4. [Data Persistence & Performance](#data-persistence--performance)
 5. [Transactional Strategies](#transactional-strategies)
-6. [Domain Events & Asynchronous Execution](#domain-events--asynchronous-execution)
-7. [Security & JWT Flow](#security--jwt-flow)
-8. [Resilience Patterns](#resilience-patterns)
-9. [Rate Limiting](#rate-limiting)
-10. [Caching Strategy](#caching-strategy)
-11. [Repository Patterns & Advanced SQL](#repository-patterns--advanced-sql)
-12. [DTOs & Projections](#dtos--projections)
-13. [Specifications (Dynamic Filtering)](#specifications-dynamic-filtering)
-14. [Observability (Logging, Metrics, Tracing, Health)](#observability-logging-metrics-tracing-health)
-15. [Configuration & Profiles](#configuration--profiles)
-16. [Build & Run](#build--run)
-17. [API Quick Reference](#api-quick-reference)
-18. [Sample cURL Usage](#sample-curl-usage)
-19. [Testing Notes](#testing-notes)
-20. [Troubleshooting](#troubleshooting)
-21. [Future Enhancements](#future-enhancements)
+6. [JTA Transaction Management](#jta-transaction-management)
+7. [Domain Events & Asynchronous Execution](#domain-events--asynchronous-execution)
+8. [Security & JWT Flow](#security--jwt-flow)
+9. [Resilience Patterns](#resilience-patterns)
+10. [Rate Limiting](#rate-limiting)
+11. [Caching Strategy](#caching-strategy)
+12. [Repository Patterns & Advanced SQL](#repository-patterns--advanced-sql)
+13. [DTOs & Projections](#dtos--projections)
+14. [Specifications (Dynamic Filtering)](#specifications-dynamic-filtering)
+15. [Observability (Logging, Metrics, Tracing, Health)](#observability-logging-metrics-tracing-health)
+16. [Configuration & Profiles](#configuration--profiles)
+17. [Build & Run](#build--run)
+18. [API Quick Reference](#api-quick-reference)
+19. [Sample cURL Usage](#sample-curl-usage)
+20. [Testing Notes](#testing-notes)
+21. [Troubleshooting](#troubleshooting)
+22. [Future Enhancements](#future-enhancements)
 
 ---
 
@@ -59,6 +60,7 @@ event/             – Domain events + async listeners
 exception/         – Centralized handler + rich exception types
 health/            – Custom health contributors
 interceptor/       – Rate limiting interceptor
+jta/               - JTA configuration and implementation (primary/secondary)
 repository/        – Spring Data + custom impl + window/native queries
 security/          – JWT, user details, auth filter & entry point
 service/           – Business logic, transactions, resilience patterns
@@ -83,6 +85,23 @@ Highlights:
 | Centralized AOP | `AopConfig` + `AopTransactionalService` | Cross-cut transaction rule without per-method annotations |
 
 Demo endpoints under `TransactionDemoController` illustrate rollback semantics (checked vs unchecked), propagation (`REQUIRES_NEW`), and programmatic control.
+
+## JTA Transaction Management
+This project includes a refactored, production-quality implementation of distributed transactions using the Java Transaction API (JTA) with Atomikos. It demonstrates how to maintain data consistency across multiple independent data sources (two separate H2 in-memory databases, named `primary` and `secondary`).
+
+### Scenario
+The example simulates transferring a balance from a user in the `primary` database to a user in the `secondary` database. The entire operation is atomic; if any part of the transfer fails, all changes are rolled back in both databases, ensuring data integrity.
+
+### Implementation Details
+*   **Centralized Configuration:** All JTA-related beans are now consolidated in `DataSourceConfig.java`. This class uses nested static configuration classes (`PrimaryDbConfig` and `SecondaryDbConfig`) to logically group the beans for each data source, improving readability and maintainability.
+*   **Clear Naming Convention:** All components are named descriptively (`primaryDataSource`, `secondaryEntityManagerFactory`, `PrimaryAccountRepository`) to make their roles immediately obvious.
+*   **Transaction Manager:** `JtaConfig.java` configures the core Atomikos transaction manager and wraps it in Spring's `JtaTransactionManager`. This single, shared `transactionManager` bean orchestrates the distributed transactions.
+*   **XA Data Sources:** `DataSourceConfig.java` defines two XA-compliant data sources (`primaryDataSource` and `secondaryDataSource`) using `AtomikosDataSourceBean`. Their properties are configured in `application.yml` under the `spring.jta.atomikos.datasource.primary` and `spring.jta.atomikos.datasource.secondary` prefixes.
+*   **JPA Persistence Units:** Each data source is associated with its own `EntityManagerFactory`. The configuration clearly separates the persistence units, pointing each to its respective repository package (`com.example.demo.jta.primary` and `com.example.demo.jta.secondary`).
+*   **Repositories:** The repositories are now located in their own packages, `primary` and `secondary`, making the data access layer for each data source distinct and organized.
+*   **Service Layer:** `JtaService.java` contains the business logic. The `transfer()` method is annotated with `@Transactional`, which leverages the shared JTA transaction manager to guarantee atomicity across both databases. The code is commented to explain the transactional boundary and how a failure would trigger a full rollback.
+
+This refactored setup provides a clear, robust, and maintainable example of handling distributed transactions in a Spring Boot application.
 
 ## Domain Events & Asynchronous Execution
 * Event publishing on registration: `AuthController` → `UserRegisteredEvent`.
@@ -202,10 +221,10 @@ docker run -p 8080:8080 --env SPRING_PROFILES_ACTIVE=dev spring-jpa-poc
 ## Sample cURL Usage
 ```bash
 # Register
-curl -X POST http://localhost:8080/api/auth/register -H "Content-Type: application/json" -d '{"name":"Alice","email":"alice@example.com","password":"Abcdef1!"}'
+curl -X POST http://localhost:8080/api/auth/register -H "Content-Type: application/json" -d '''{"name":"Alice","email":"alice@example.com","password":"Abcdef1!"}'''
 
 # Login
-TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login -H "Content-Type: application/json" -d '{"email":"alice@example.com","password":"Abcdef1!"}' | jq -r .accessToken)
+TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login -H "Content-Type: application/json" -d '''{"email":"alice@example.com","password":"Abcdef1!"}''' | jq -r .accessToken)
 
 # Authenticated search
 curl -H "Authorization: Bearer $TOKEN" "http://localhost:8080/api/users/search?name=ali&page=0&size=5"
