@@ -103,6 +103,23 @@ The example simulates transferring a balance from a user in the `primary` databa
 
 This refactored setup provides a clear, robust, and maintainable example of handling distributed transactions in a Spring Boot application.
 
+### Running the JTA demo
+
+```bash
+./gradlew bootRun -Dspring.profiles.active=jta
+```
+
+This spins up two XA-managed H2 datasources (primary/secondary) coordinated by Atomikos.
+
+> Note: For PostgreSQL in production, prefer Narayana XA
+>
+> - Swap the dependency: `org.springframework.boot:spring-boot-starter-jta-narayana`.
+> - Use the PostgreSQL XADataSource (e.g., `org.postgresql.xa.PGXADataSource`) with proper XA properties.
+> - Keep each datasource uniquely named and ensure your `JtaTransactionManager` is the single coordinator.
+> - Connection pools: classic XA pools (Atomikos/Narayana) manage enlistment; HikariCP itself is not an XA pool.
+>
+> Narayana is well-tested with PostgreSQL and a solid choice when you move this POC to real XA-capable infrastructure.
+
 ## Domain Events & Asynchronous Execution
 * Event publishing on registration: `AuthController` → `UserRegisteredEvent`.
 * Async listener: `UserRegistrationListener` (`@Async @EventListener`) decouples side-effects (email simulation, provisioning) from request latency.

@@ -20,12 +20,16 @@ public class TransactionalUserService {
     private static final Logger logger = LoggerFactory.getLogger(TransactionalUserService.class);
 
     private final UserRepository userRepository;
-    private final TransactionalUserService self;
+    private TransactionalUserService self;
 
-    // We inject a proxy of the service itself to ensure that transactional annotations are applied
-    // correctly when calling methods from within the same class.
-    public TransactionalUserService(UserRepository userRepository, TransactionalUserService self) {
+    // Inject UserRepository; self-proxy will be set via @Autowired after construction
+    public TransactionalUserService(UserRepository userRepository) {
         this.userRepository = userRepository;
+    }
+
+    // Set the self-proxy after construction to avoid circular dependency in constructor
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setSelf(TransactionalUserService self) {
         this.self = self;
     }
 

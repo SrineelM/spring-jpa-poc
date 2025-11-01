@@ -1,0 +1,17 @@
+###############################################################################
+# Test configuration override - ensures clean test environment                #
+###############################################################################
+
+spring:
+  main:
+    # Allow bean overrides in test configurations (common pattern)
+    allow-bean-definition-overriding: true
+  jpa:
+    # Ensure data.sql loads in test context (needed for slice tests)
+    defer-datasource-initialization: true
+
+
+
+
+
+

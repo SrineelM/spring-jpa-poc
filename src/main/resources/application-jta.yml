@@ -1,0 +1,24 @@
+###############################################################################
+# JTA profile - Atomikos with two H2 XA datasources (demo only)               #
+###############################################################################
+
+spring:
+  jta:
+    atomikos:
+      datasource:
+        primary:
+          xa-data-source-class-name: org.h2.jdbcx.JdbcDataSource
+          xa-properties:
+            URL: jdbc:h2:mem:primarydb;DB_CLOSE_DELAY=-1
+          unique-resource-name: primaryDs
+          max-pool-size: 10
+        secondary:
+          xa-data-source-class-name: org.h2.jdbcx.JdbcDataSource
+          xa-properties:
+            URL: jdbc:h2:mem:secondarydb;DB_CLOSE_DELAY=-1
+          unique-resource-name: secondaryDs
+          max-pool-size: 10
+
+logging:
+  level:
+    'com.atomikos': INFO

@@ -47,7 +47,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator' // For monitoring and managing the application
     implementation 'org.springframework.boot:spring-boot-starter-security' // For authentication and authorization
     // JTA/Atomikos for distributed transactions (activate with -Dspring.profiles.active=jta)
-    implementation 'org.springframework.boot:spring-boot-starter-jta-atomikos'
+    // Use a compatible version of Atomikos
+    implementation 'com.atomikos:transactions-jta:6.0.0'
+    implementation 'com.atomikos:transactions-jdbc:6.0.0'
+    implementation 'com.atomikos:transactions-spring-boot:6.0.0'
 
     // --- Resilience4j (Fault Tolerance) ---
     implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j' // For the Circuit Breaker pattern
