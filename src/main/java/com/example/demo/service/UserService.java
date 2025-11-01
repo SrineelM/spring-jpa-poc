@@ -1,6 +1,8 @@
 package com.example.demo.service;
 
 import com.example.demo.domain.User;
+import com.example.demo.exception.DuplicateEmailException;
+import com.example.demo.exception.UserNotFoundException;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.spec.UserSpecifications;
 import io.micrometer.tracing.annotation.NewSpan;
@@ -8,6 +10,7 @@ import io.micrometer.tracing.annotation.SpanTag;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,7 +32,7 @@ public class UserService {
 
     /**
      * Searches for users with dynamic filtering, pagination, and sorting. Enhanced with distributed
-     * tracing and structured logging.
+     * tracing, caching, and structured logging.
      */
     @NewSpan("user-search")
     @Cacheable(
@@ -86,18 +89,20 @@ public class UserService {
         }
     }
 
-    /** Find user by ID with caching and tracing */
-    @NewSpan("user-findById")
+    /**
+     * Find user by ID (optional). Results are cached.
+     */
+    @NewSpan("user-findById-optional")
     @Cacheable(value = "users", key = "#id")
     public Optional<User> findById(@SpanTag("user.id") Long id) {
-        logger.debug("Finding user by ID: {}", id);
+        logger.debug("Finding user by ID (optional): {}", id);
 
         try {
             Optional<User> user = userRepository.findById(id);
             if (user.isPresent()) {
                 logger.debug("User found with ID: {}", id);
             } else {
-                logger.warn("User not found with ID: {}", id);
+                logger.debug("User not found with ID: {}", id);
             }
             return user;
 
@@ -107,29 +112,98 @@ public class UserService {
         }
     }
 
-    /** Create or update user with proper transaction management */
+    /**
+     * Find user by ID or throw UserNotFoundException (404).
+     * Results are cached.
+     */
+    @NewSpan("user-findById-or-throw")
+    @Cacheable(value = "users", key = "#id")
+    public User findByIdOrThrow(@SpanTag("user.id") Long id) {
+        logger.debug("Finding user by ID (with throw): {}", id);
+
+        try {
+            return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+
+        } catch (UserNotFoundException e) {
+            logger.warn("User not found with ID: {}", id);
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error finding user by ID: {}", id, e);
+            throw e;
+        }
+    }
+
+    /**
+     * Create or update user with proper transaction management.
+     * Throws DuplicateEmailException if email already exists.
+     * Cache is fully invalidated on write to prevent stale data.
+     */
     @NewSpan("user-save")
     @Transactional
+    @CacheEvict(value = "users", allEntries = true)
     public User save(@SpanTag("user.email") User user) {
         logger.info("Saving user with email: {}", user.getEmail());
 
         try {
-            // NOTE: Because we cache user lookup & search results, mutations should trigger cache
-            // eviction.
-            // For brevity in this POC we log intent instead of adding @CacheEvict annotations.
-            // (Prod) Add: @CacheEvict(value={"users","user-stats"}, allEntries=true) or fine‑grained keys
-            // to avoid stale data.
+            // Check for duplicate email (only if creating new or changing email)
+            if (user.getId() == null) {
+                // New user: check if email exists
+                if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+                    throw new DuplicateEmailException(user.getEmail());
+                }
+            } else {
+                // Updating existing user: check if email changed and if new email exists
+                Optional<User> existing = userRepository.findById(user.getId());
+                if (existing.isPresent()) {
+                    String currentEmail = existing.get().getEmail();
+                    if (!currentEmail.equals(user.getEmail())
+                            && userRepository.findByEmail(user.getEmail()).isPresent()) {
+                        throw new DuplicateEmailException(user.getEmail());
+                    }
+                }
+            }
+
             User savedUser = userRepository.save(user);
             logger.info("User saved successfully with ID: {}", savedUser.getId());
             return savedUser;
 
+        } catch (DuplicateEmailException e) {
+            logger.warn("Duplicate email during save: {}", user.getEmail());
+            throw e;
         } catch (Exception e) {
             logger.error("Error saving user with email: {}", user.getEmail(), e);
             throw e;
         }
     }
 
-    /** Get user count for monitoring */
+    /**
+     * Delete user by ID. Invalidates cache.
+     * Throws UserNotFoundException if user doesn't exist.
+     */
+    @NewSpan("user-delete")
+    @Transactional
+    @CacheEvict(value = "users", allEntries = true)
+    public void deleteById(@SpanTag("user.id") Long id) {
+        logger.info("Deleting user with ID: {}", id);
+
+        try {
+            // Verify user exists before deleting
+            User user = findByIdOrThrow(id);
+            userRepository.deleteById(id);
+            logger.info("User deleted successfully with ID: {}", id);
+
+        } catch (UserNotFoundException e) {
+            logger.warn("Cannot delete: user not found with ID: {}", id);
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error deleting user with ID: {}", id, e);
+            throw e;
+        }
+    }
+
+    /**
+     * Get user count for monitoring. Cached for performance.
+     */
     @NewSpan("user-count")
     @Cacheable(value = "user-stats", key = "'total-count'")
     public long getTotalUserCount() {
@@ -142,7 +216,7 @@ public class UserService {
 
         } catch (Exception e) {
             logger.error("Error getting user count", e);
-            throw e; // propagate to allow upstream handling / metrics tagging
+            throw e;
         }
     }
 }

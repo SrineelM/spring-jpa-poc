@@ -132,6 +132,74 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * Handle UserNotFoundException (404 NOT_FOUND)
+     */
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorDetails> handleUserNotFound(UserNotFoundException ex, WebRequest request) {
+        logger.warn("User not found for request: {}", request.getDescription(false));
+
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(), ex.getMessage(), request.getDescription(false), ex.getErrorCode());
+
+        return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Handle DuplicateEmailException (409 CONFLICT)
+     */
+    @ExceptionHandler(DuplicateEmailException.class)
+    public ResponseEntity<ErrorDetails> handleDuplicateEmail(DuplicateEmailException ex, WebRequest request) {
+        logger.warn("Duplicate email for request: {}", request.getDescription(false));
+
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(), ex.getMessage(), request.getDescription(false), ex.getErrorCode());
+
+        return new ResponseEntity<>(errorDetails, HttpStatus.CONFLICT);
+    }
+
+    /**
+     * Handle InsufficientPrivilegesException (403 FORBIDDEN)
+     */
+    @ExceptionHandler(InsufficientPrivilegesException.class)
+    public ResponseEntity<ErrorDetails> handleInsufficientPrivileges(
+            InsufficientPrivilegesException ex, WebRequest request) {
+        logger.warn("Insufficient privileges for request: {}", request.getDescription(false));
+
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(), ex.getMessage(), request.getDescription(false), ex.getErrorCode());
+
+        return new ResponseEntity<>(errorDetails, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Handle InvalidStateTransitionException (422 UNPROCESSABLE_ENTITY)
+     */
+    @ExceptionHandler(InvalidStateTransitionException.class)
+    public ResponseEntity<ErrorDetails> handleInvalidStateTransition(
+            InvalidStateTransitionException ex, WebRequest request) {
+        logger.warn("Invalid state transition for request: {}", request.getDescription(false));
+
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(), ex.getMessage(), request.getDescription(false), ex.getErrorCode());
+
+        return new ResponseEntity<>(errorDetails, HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    /**
+     * Generic DomainException handler (catches any subclass not specifically handled above)
+     */
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<ErrorDetails> handleDomainException(DomainException ex, WebRequest request) {
+        logger.warn("Domain error for request: {}", request.getDescription(false));
+
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(), ex.getMessage(), request.getDescription(false), ex.getErrorCode());
+
+        HttpStatus status = HttpStatus.resolve(ex.getHttpStatus());
+        return new ResponseEntity<>(errorDetails, status != null ? status : HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     @ExceptionHandler(Exception.class) // fallback catch-all – always keep last to avoid pre-emption
     public ResponseEntity<ErrorDetails> handleGlobalException(Exception ex, WebRequest request) {
         logger.error("Unexpected error for request: {}", request.getDescription(false), ex);

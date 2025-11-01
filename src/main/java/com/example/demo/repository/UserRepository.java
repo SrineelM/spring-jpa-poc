@@ -25,6 +25,15 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Optional<User> findByEmailWithProfile(@Param("email") String email);
 
     /**
+     * Simple find by email query. Used for duplicate detection in save operations.
+     *
+     * @param email The email to search for.
+     * @return An Optional containing the User if found.
+     */
+    @Query("SELECT u FROM User u WHERE u.email = :email")
+    Optional<User> findByEmail(@Param("email") String email);
+
+    /**
      * Finds all users with a given role. NOTE: This method is susceptible to the N+1 problem. If you
      * iterate over the returned list and access a lazy association (e.g., user.getPosts()), it will
      * trigger an additional query for each user.

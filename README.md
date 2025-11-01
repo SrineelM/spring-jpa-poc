@@ -248,11 +248,75 @@ curl -H "Authorization: Bearer $TOKEN" "http://localhost:8080/api/users/search?n
 ```
 
 ## Testing Notes
-* JUnit 5 platform enabled; security test utilities included.
-* Recommended additions (not yet implemented):
-  * Slice tests (`@DataJpaTest`, `@WebMvcTest`).
-  * Contract tests for error handler response schema.
-  * Resilience pattern tests using `TestScheduler` / controlled failure injection.
+The project includes comprehensive unit test coverage:
+
+### Test Files
+* **`DomainExceptionTest.java`** – Unit tests for the exception hierarchy covering:
+  * `UserNotFoundException` (404 NOT_FOUND)
+  * `DuplicateEmailException` (409 CONFLICT)  
+  * `InsufficientPrivilegesException` (403 FORBIDDEN)
+  * `InvalidStateTransitionException` (422 UNPROCESSABLE_ENTITY)
+  * Exception type hierarchy and HTTP status code mapping
+
+* **`UserServiceTest.java`** – Comprehensive unit tests for business logic covering:
+  * `findById()` success and not-found scenarios
+  * `findByIdOrThrow()` exception throwing
+  * `save()` with duplicate email validation and conflict handling
+  * `deleteById()` with exception handling
+  * `getTotalUserCount()` aggregation
+  * `searchUsers()` with pagination and specification filtering
+  * All tests use Mockito for repository mocking (no database dependency)
+
+### Running Tests
+```bash
+# Run all tests
+./gradlew test
+
+# Run specific test class
+./gradlew test --tests DomainExceptionTest
+./gradlew test --tests UserServiceTest
+
+# Run with coverage report
+./gradlew test --coverage
+```
+
+### Exception Hierarchy & HTTP Status Mapping
+The project implements a type-safe exception hierarchy under `exception/`:
+
+| Exception Class | HTTP Status | Error Code | Use Case |
+|-----------------|-------------|-----------|----------|
+| `DomainException` | — | — | Abstract base exception |
+| `UserNotFoundException` | 404 | USER_NOT_FOUND | User lookup fails |
+| `DuplicateEmailException` | 409 | DUPLICATE_EMAIL | Email already registered |
+| `InsufficientPrivilegesException` | 403 | INSUFFICIENT_PRIVILEGES | User lacks authorization |
+| `InvalidStateTransitionException` | 422 | INVALID_STATE_TRANSITION | Invalid workflow state |
+
+The `GlobalExceptionHandler` routes each exception type to the correct HTTP response:
+```java
+@ExceptionHandler(UserNotFoundException.class)
+public ResponseEntity<ErrorDetails> handleUserNotFound(UserNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDetails(...));
+}
+
+@ExceptionHandler(DuplicateEmailException.class)
+public ResponseEntity<ErrorDetails> handleDuplicateEmail(DuplicateEmailException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorDetails(...));
+}
+// ... etc
+```
+
+### Cache Eviction Strategy
+`UserService` implements aggressive cache eviction on all write operations:
+* `save()` → `@CacheEvict(value="users", allEntries=true)`
+* `deleteById()` → `@CacheEvict(value="users", allEntries=true)`
+
+This prevents stale data scenarios where users see outdated information after mutations.
+
+### Recommended Additions (Future)
+* Integration tests (`@SpringBootTest`) with full bean context
+* Slice tests (`@DataJpaTest` for repository, `@WebMvcTest` for controllers)
+* Contract tests for error response schema validation
+* Resilience pattern tests using `TestScheduler` for controlled failure injection
 
 ## Troubleshooting
 | Issue | Likely Cause | Resolution |

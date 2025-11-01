@@ -37,12 +37,22 @@ This is a production-grade Spring Boot 3.5.x showcase, demonstrating advanced pa
 - See `UserService`, `ExternalApiService`, `RateLimitInterceptor`, `JwtAuthenticationFilter`, and `UserSpecifications` for key patterns.
 - API endpoints and usage examples in `README.md`.
 
+## Testing & Exception Handling Patterns
+- **Exception Hierarchy**: All domain exceptions extend `DomainException` with typed error codes and HTTP status codes:
+  - `UserNotFoundException` (404), `DuplicateEmailException` (409), `InsufficientPrivilegesException` (403), `InvalidStateTransitionException` (422)
+  - `GlobalExceptionHandler` routes typed exceptions to correct HTTP status codes
+  - Never return generic 500 for business rule violations
+- **Unit Tests**: Use Mockito for repository mocking. Test files: `DomainExceptionTest.java`, `UserServiceTest.java`
+- **Cache Eviction**: All write operations (`save()`, `deleteById()`) use `@CacheEvict(value="users", allEntries=true)` to prevent stale data
+- **Test Naming**: Use `testMethodName_Scenario_ExpectedResult()` pattern (e.g., `testSave_DuplicateEmail()`)
+
 ## Project-Specific Guidance
 - Always use DTOs for controller responses.
 - Avoid deprecated `Specification.where(null)`; use `cb.conjunction()`.
 - Prefer constructor-based projections for performance.
 - Use async event listeners for decoupling side effects.
 - Centralize cross-cutting concerns in config/interceptor packages.
+- For mutations (save/delete), always add `@CacheEvict(allEntries=true)` to prevent stale cached data
 
 ## Troubleshooting
 - Common issues and resolutions are documented in `README.md` (401, 429, circuit breaker, H2 console, cache).
