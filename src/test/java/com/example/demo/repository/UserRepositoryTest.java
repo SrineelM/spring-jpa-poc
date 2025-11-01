@@ -6,9 +6,11 @@ import com.example.demo.domain.Role;
 import com.example.demo.domain.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 @DataJpaTest
+@EnableJpaAuditing
 class UserRepositoryTest {
 
     @Autowired
@@ -19,6 +21,7 @@ class UserRepositoryTest {
         User u = new User();
         u.setName("John");
         u.setEmail("john@example.com");
+        u.setPassword("secret");
         u.setRole(Role.USER);
         repo.save(u);
         assertThat(repo.findByEmailWithProfile("john@example.com")).isPresent();

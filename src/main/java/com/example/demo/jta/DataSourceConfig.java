@@ -1,17 +1,19 @@
 package com.example.demo.jta;
 
-import com.atomikos.jdbc.AtomikosDataSourceBean;
+import javax.sql.DataSource;
+import javax.sql.XADataSource;
+import org.h2.jdbcx.JdbcDataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.XADataSourceWrapper;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
-
-import javax.sql.DataSource;
-import java.util.Properties;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Consolidated configuration for setting up multiple data sources to demonstrate JTA (Java Transaction API)
@@ -19,6 +21,7 @@ import java.util.Properties;
  * and configures their respective JPA Entity Manager Factories.
  */
 @Configuration
+@Profile("jta")
 public class DataSourceConfig {
 
     // =====================================================================================
@@ -34,9 +37,10 @@ public class DataSourceConfig {
      */
     @Primary
     @Bean(name = "primaryDataSource")
-    @ConfigurationProperties(prefix = "spring.jta.atomikos.datasource.primary")
-    public DataSource primaryDataSource() {
-        return new AtomikosDataSourceBean();
+    public DataSource primaryDataSource(XADataSourceWrapper wrapper) throws Exception {
+        JdbcDataSource xa = new JdbcDataSource();
+        xa.setURL("jdbc:h2:mem:primarydb;DB_CLOSE_DELAY=-1");
+        return wrapper.wrapDataSource((XADataSource) xa);
     }
 
     /**
@@ -47,9 +51,10 @@ public class DataSourceConfig {
      * @return A configured XA DataSource for the secondary database.
      */
     @Bean(name = "secondaryDataSource")
-    @ConfigurationProperties(prefix = "spring.jta.atomikos.datasource.secondary")
-    public DataSource secondaryDataSource() {
-        return new AtomikosDataSourceBean();
+    public DataSource secondaryDataSource(XADataSourceWrapper wrapper) throws Exception {
+        JdbcDataSource xa = new JdbcDataSource();
+        xa.setURL("jdbc:h2:mem:secondarydb;DB_CLOSE_DELAY=-1");
+        return wrapper.wrapDataSource((XADataSource) xa);
     }
 
     // =====================================================================================
@@ -65,11 +70,14 @@ public class DataSourceConfig {
      *
      * @return A Properties object containing essential Hibernate JTA settings.
      */
-    private Properties jpaProperties() {
-        Properties properties = new Properties();
-        properties.put("hibernate.hbm2ddl.auto", "create-drop");
+    private static Map<String, Object> jpaProperties() {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("hibernate.hbm2ddl.auto", "create-drop"); // demo only; prefer migrations in prod
         properties.put("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
-        properties.put("hibernate.transaction.jta.platform", "com.atomikos.icatch.jta.hibernate4.AtomikosPlatform");
+    // Hibernate 6 with Narayana
+    properties.put("hibernate.transaction.jta.platform", "org.hibernate.engine.transaction.jta.platform.internal.JBossAppServerJtaPlatform");
+        import com.atomikos.jdbc.AtomikosDataSourceBean;
+        import org.springframework.boot.context.properties.ConfigurationProperties;
         return properties;
     }
 

@@ -40,11 +40,13 @@ dependencyManagement {
 dependencies {
     // --- Spring Boot Starters ---
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa' // For data persistence with JPA and Hibernate
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc' // For Spring JDBC (JdbcTemplate/NamedParameterJdbcTemplate)
     implementation 'org.springframework.boot:spring-boot-starter-web' // For building web applications, including RESTful APIs
     implementation 'org.springframework.boot:spring-boot-starter-cache' // For caching support
     implementation 'org.springframework.boot:spring-boot-starter-aop' // For aspect-oriented programming, required by Resilience4j
     implementation 'org.springframework.boot:spring-boot-starter-actuator' // For monitoring and managing the application
     implementation 'org.springframework.boot:spring-boot-starter-security' // For authentication and authorization
+    // JTA/Atomikos for distributed transactions (activate with -Dspring.profiles.active=jta)
     implementation 'org.springframework.boot:spring-boot-starter-jta-atomikos'
 
     // --- Resilience4j (Fault Tolerance) ---
@@ -63,7 +65,8 @@ dependencies {
 
     // --- Database & Caching ---
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.6' // High-performance caching library
-    runtimeOnly 'com.h2database:h2' // In-memory database for development and testing
+    implementation 'com.h2database:h2' // In-memory database for development and testing (compile scope required for JTA demo types)
+    runtimeOnly 'org.postgresql:postgresql:42.7.4' // Production-grade PostgreSQL driver
 
     // --- Developer Tools ---
     compileOnly 'org.projectlombok:lombok' // Reduces boilerplate code (e.g., getters, setters)
@@ -82,6 +85,7 @@ dependencies {
     // --- Testing ---
     testImplementation 'org.springframework.boot:spring-boot-starter-test' // Core testing utilities for Spring Boot
     testImplementation 'org.springframework.security:spring-security-test' // For testing Spring Security features
+    testImplementation 'io.projectreactor:reactor-test' // StepVerifier for reactive-style tests
 }
 
 // This section configures the testing framework.
